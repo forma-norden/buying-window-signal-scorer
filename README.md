@@ -1,6 +1,6 @@
 # Buying Window Signal Scorer
 
-**Find companies showing the changes your offer can help with.** This small, open-source app turns [Google Jobs](https://www.searchapi.io/docs/google-jobs) and [Google News](https://www.searchapi.io/docs/google-news) results into a source-linked research queue. You choose the hiring and company events. The scorer shows why each company appeared and how it earned its score.
+**Find companies showing the changes your offer can help with.** Built with SearchApi's [Google Jobs](https://www.searchapi.io/docs/google-jobs?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) and [Google News](https://www.searchapi.io/docs/google-news?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) APIs, this small, open-source app turns hiring and company news into a source-linked research queue. You choose the signals; the scorer shows why each company appeared and how it earned its score.
 
 It is useful for consultants, agencies, software teams, recruiters, and founders researching B2B prospects. The default looks for growth and expansion; you can switch to team buildout, new leadership, revenue operations, or your own profile.
 
@@ -8,7 +8,7 @@ It is useful for consultants, agencies, software teams, recruiters, and founders
 
 ## Get started
 
-**Prerequisites:** Python 3.11+ and a [SearchApi account](https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com). SearchApi currently offers **100 free requests** when you sign up; [check its pricing page](https://www.searchapi.io/pricing) for the current allowance.
+**Prerequisites:** Python 3.11+ and a [SearchApi account](https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com). SearchApi currently offers **100 free requests** when you sign up; [check its pricing page](https://www.searchapi.io/pricing?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) for the current allowance.
 
 ```bash
 git clone https://github.com/forma-norden/buying-window-signal-scorer.git

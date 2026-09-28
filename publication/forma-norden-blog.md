@@ -15,7 +15,7 @@ An account can fit your target market for years without having a reason to chang
 
 Public job descriptions are one place to find that change. A company hiring an operations manager may be opening a region, bringing an outsourced process in-house, or replacing a patchwork of systems. The title gets you to the posting; the mandate in the description tells you what to investigate. Company news can supply another part of the story if it clearly refers to the same employer.
 
-We built an [open-source Buying Window Signal Scorer](https://github.com/forma-norden/buying-window-signal-scorer) to turn that method into a repeatable search. It combines [SearchApi Google Jobs](https://www.searchapi.io/docs/google-jobs) and [Google News](https://www.searchapi.io/docs/google-news), ranks companies against an editable profile, and keeps the underlying links beside the score. You can run it locally with your own SearchApi key.
+We built an [open-source Buying Window Signal Scorer](https://github.com/forma-norden/buying-window-signal-scorer) to turn that method into a repeatable search. It combines [SearchApi Google Jobs](https://www.searchapi.io/docs/google-jobs?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) and [Google News](https://www.searchapi.io/docs/google-news?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com), ranks companies against an editable profile, and keeps the underlying links beside the score. You can run it locally with your own SearchApi key.
 
 **TL;DR:** Define the business change your offer can help with. Search for roles and description phrases that reveal it, then check relevant company events. Score recent, attributable evidence, open the original sources, and qualify the account against your actual market. The [tool and setup guide](https://github.com/forma-norden/buying-window-signal-scorer) make the search repeatable; the score is a research order, not a purchase forecast.
 
@@ -72,7 +72,7 @@ These counts describe the responses to a few queries at a point in time. They do
 
 ## Request budget and repeat scans
 
-SearchApi's [pricing page](https://www.searchapi.io/pricing) currently lists **100 free requests** on signup. The app shows its planned upper bound before making a live call. Under the shipped growth profile, a discovery run has at most two Jobs requests and six News requests: **eight initial searches**. A smaller three-company run plans five. Retries count against the hard attempt cap, so the final count can differ from the initial plan.
+SearchApi's [pricing page](https://www.searchapi.io/pricing?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) currently lists **100 free requests** on signup. The app shows its planned upper bound before making a live call. Under the shipped growth profile, a discovery run has at most two Jobs requests and six News requests: **eight initial searches**. A smaller three-company run plans five. Retries count against the hard attempt cap, so the final count can differ from the initial plan.
 
 At eight requests per full default run, 100 requests would cover at most twelve such runs with four requests left **if there were no retries or other usage**. That is arithmetic for planning a trial, not a quoted price or a promise about an account's remaining balance. Set the company and attempt limits to match the decision you need to make. For an initial test, a small scan in one market is usually enough to see whether your role and phrase choices produce useful evidence.
 

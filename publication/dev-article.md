@@ -14,7 +14,7 @@ I built [Buying Window Signal Scorer](https://github.com/forma-norden/buying-win
 
 ## Run it with your own search
 
-Get a [SearchApi key](https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) first. Its [pricing page](https://www.searchapi.io/pricing) currently offers 100 free requests on signup. Then:
+Get a [SearchApi key](https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) first. Its [pricing page](https://www.searchapi.io/pricing?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) currently offers 100 free requests on signup. Then:
 
 ```bash
 git clone https://github.com/forma-norden/buying-window-signal-scorer.git
@@ -46,7 +46,7 @@ Under the hood, the two paths start differently:
 {"engine": "google_jobs", "q": "Harbor Foods operations manager OR business development manager", "location": "United States", "gl": "us"}
 ```
 
-In both paths, the scorer checks the returned employer field before assigning a job to a company. An article about a company is checked against the company name and the selected event terms. [SearchApi's Jobs](https://www.searchapi.io/docs/google-jobs) and [News](https://www.searchapi.io/docs/google-news) endpoints provide the source results; the matching and scoring rules are local and readable in the repository.
+In both paths, the scorer checks the returned employer field before assigning a job to a company. An article about a company is checked against the company name and the selected event terms. [SearchApi's Jobs](https://www.searchapi.io/docs/google-jobs?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) and [News](https://www.searchapi.io/docs/google-news?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) endpoints provide the source results; the matching and scoring rules are local and readable in the repository.
 
 ## What earns 100 points?
 
