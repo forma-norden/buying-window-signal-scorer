@@ -63,20 +63,21 @@ class TransportTests(unittest.TestCase):
         transport.assert_not_called()
 
     def test_watchlist_queries_are_broad_and_employer_scoped(self):
-        settings = validate({"role_queries": ["revenue operations saas"]})
+        settings = validate({"role_queries": ["operations manager"]})
         queries = list(_job_queries("watchlist", [{"company": "Safe Software"}], settings))
-        self.assertEqual(len(queries), 2)
-        self.assertIn("Safe Software revenue operations", queries[0]["q"])
-        self.assertNotIn("saas", queries[0]["q"])
+        self.assertEqual(len(queries), 1)
+        self.assertIn("Safe Software operations manager", queries[0]["q"])
 
     def test_preflight_rejects_over_cap(self):
         settings = validate({"role_queries": ["one", "two", "three", "four", "five", "six"]})
         estimate_result = estimate("discovery", "", settings)
-        self.assertEqual(estimate_result["planned_upper_bound"], 62)
+        self.assertEqual(estimate_result["planned_upper_bound"], 12)
+        self.assertTrue(estimate_result["within_cap"])
+        self.assertFalse(estimate("discovery", "", validate({"role_queries": ["one", "two", "three", "four", "five", "six"], "max_requests": 10}))["within_cap"])
 
     def test_mandate_excerpt_has_word_boundaries(self):
-        hits = mandate_hits("Long introduction with useful context about how the team will build the systems required for launch next year.", DEFAULT)
-        self.assertIn("build the systems", hits[0])
+        hits = mandate_hits("Long introduction with useful context about how the team will build the team required for launch next year.", DEFAULT)
+        self.assertIn("build the team", hits[0])
         self.assertFalse(hits[0].startswith("ong"))
 
 

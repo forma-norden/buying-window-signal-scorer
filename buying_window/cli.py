@@ -6,9 +6,9 @@ import json
 from pathlib import Path
 
 from .config import load
-from .runner import collect
+from .runner import annotate_comparison, collect
 from .runner import demo, replay
-from .storage import save_run
+from .storage import latest_report, save_run
 
 
 def main():
@@ -34,7 +34,9 @@ def main():
             settings["max_accounts"] = args.max_accounts
         watchlist = args.watchlist_file.read_text(encoding="utf-8") if args.watchlist_file else ""
         report, entries, _ = collect(args.mode, watchlist, settings, _key())
-        path = save_run(report, entries, settings, watchlist)
+        previous = latest_report()
+        annotate_comparison(report, previous)
+        path = save_run(report, entries, settings, watchlist, previous_report=previous if report["comparison"] == "repeat" else None)
         print(json.dumps({"archive": str(path), "scanned_at": report["scanned_at"], "account_count": report["account_count"], "job_count": report["job_count"], "request_count": report["request_count"], "partial": report["partial"], "top_accounts": [{"company": x["company"], "score": x["score"]} for x in report["accounts"][:10]]}, indent=2))
     else:
         report = demo()[0] if args.command == "demo" else replay(args.archive)

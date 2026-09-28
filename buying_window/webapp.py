@@ -10,8 +10,8 @@ from fastapi import Body, FastAPI, HTTPException
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from .config import DATA, ROOT, load, save, validate
-from .runner import collect, demo, estimate
+from .config import DATA, ROOT, PRESETS, load, save, validate
+from .runner import annotate_comparison, collect, demo, estimate
 from .storage import latest_report, save_run
 
 app = FastAPI(title="Buying Window Signal Scorer", docs_url=None, redoc_url=None)
@@ -40,6 +40,11 @@ def get_config():
     return {"config": load(), "key_ready": bool(_key())}
 
 
+@app.get("/api/profiles")
+def get_profiles():
+    return {"profiles": PRESETS}
+
+
 @app.put("/api/config")
 def put_config(body: dict = Body(...)):
     try:
@@ -51,7 +56,7 @@ def put_config(body: dict = Body(...)):
 @app.post("/api/estimate")
 def post_estimate(body: dict = Body(...)):
     try:
-        return estimate(body.get("mode", "discovery"), body.get("watchlist", ""), load())
+        return estimate(body.get("mode", "discovery"), body.get("watchlist", ""), body.get("settings", load()))
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
 
@@ -64,22 +69,26 @@ def get_latest():
 @app.post("/api/demo")
 def post_demo():
     report, entries = demo()
-    path = save_run(report, entries, load())
-    report["archive_name"] = path.name
+    report["archive_name"] = "bundled fixture"
     return {"report": report}
 
 
 @app.post("/api/scan")
 def post_scan(body: dict = Body(...)):
     if not _key():
-        raise HTTPException(400, "Add SEARCHAPI_API_KEY to the local .env file before a live scan")
+        raise HTTPException(400, "Add your SearchApi key before a live scan")
     mode, watchlist = body.get("mode", "discovery"), body.get("watchlist", "")
-    settings = load()
+    settings = body.get("settings", load())
     try:
+        settings = validate(settings)
+        estimate(mode, watchlist, settings)
+        save(settings)
         report, entries, _ = collect(mode, watchlist, settings, _key())
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
-    path = save_run(report, entries, settings, watchlist)
+    previous = latest_report()
+    annotate_comparison(report, previous)
+    path = save_run(report, entries, settings, watchlist, previous_report=previous if report["comparison"] == "repeat" else None)
     report["archive_name"] = path.name
     return {"report": report}
 

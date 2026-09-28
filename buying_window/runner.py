@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import json
+import hashlib
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -50,18 +52,40 @@ def _job_queries(mode: str, accounts: list[dict], settings: dict):
             for role in settings["role_queries"]:
                 yield {"engine": "google_jobs", "q": role, "location": loc["label"], "gl": loc["gl"], "hl": "en"}
     else:
-        # Google Jobs handles broad natural-language queries more reliably than
-        # quoted Boolean groups. Remove the discovery-only SaaS qualifier when
-        # the employer is already specified.
-        joined = " OR ".join(x.replace(" saas", "").replace(" SaaS", "") for x in settings["role_queries"])
+        joined = " OR ".join(settings["role_queries"])
         for account in accounts:
             for loc in settings["locations"]:
                 yield {"engine": "google_jobs", "q": f'{account["company"]} {joined}', "location": loc["label"], "gl": loc["gl"], "hl": "en"}
 
 
-def _news_query(account: dict) -> dict:
+def _news_query(account: dict, settings: dict) -> dict:
     name = account["company"].replace('"', "")
-    return {"engine": "google_news", "q": f'"{name}" funding OR appoints OR "chief revenue officer"', "gl": "us", "hl": "en", "link": "resolved"}
+    return {"engine": "google_news", "q": f'"{name}" ({settings["news_query"]})', "gl": settings["locations"][0]["gl"], "hl": "en", "link": "resolved"}
+
+
+def scan_key(mode: str, watchlist: str, settings: dict) -> str:
+    shape = {"mode": mode, "watchlist": parse_watchlist(watchlist) if mode == "watchlist" else [], "profile": settings}
+    return hashlib.sha256(json.dumps(shape, sort_keys=True).encode()).hexdigest()[:16]
+
+
+def annotate_comparison(report: dict, previous: dict | None) -> dict:
+    if not previous or previous.get("scan_key") != report.get("scan_key") or previous.get("demo"):
+        report["comparison"] = "baseline"
+        return report
+    old = {normalise_name(row["company"]): row for row in previous.get("accounts", [])}
+    for row in report["accounts"]:
+        prior = old.get(normalise_name(row["company"]))
+        if prior is None:
+            row["first_seen_jobs"] = [x["id"] for x in row["jobs"]]
+            row["first_seen_news"] = [x["id"] for x in row["news"]]
+        else:
+            old_jobs = {x.get("id") for x in prior.get("jobs", [])}
+            old_news = {x.get("id") for x in prior.get("news", [])}
+            row["first_seen_jobs"] = [x["id"] for x in row["jobs"] if x["id"] not in old_jobs]
+            row["first_seen_news"] = [x["id"] for x in row["news"] if x["id"] not in old_news]
+    report["comparison"] = "repeat"
+    report["compared_to"] = previous["scanned_at"]
+    return report
 
 
 def analyse(entries: list[dict], mode: str, watchlist: str, settings: dict, now: datetime | None = None, errors: list[dict] | None = None) -> dict:
@@ -77,8 +101,11 @@ def analyse(entries: list[dict], mode: str, watchlist: str, settings: dict, now:
         def discovery_priority(group):
             dated = [job for job in group if job["age_days"] is not None and job["age_days"] <= 30]
             strong = any(job["role_fit"] == "strong" for job in dated)
+            mandate = any(job.get("mandate_evidence") for job in dated)
             youngest = min((job["age_days"] for job in dated), default=999)
-            return (-int(strong), -int(bool(dated)), youngest, -len(group), group[0]["company"].lower())
+            name = group[0]["company"]
+            intermediary = bool(re.search(r"recruitment|staffing|job board|legal entity|^\d{3,}[-\s]", name, re.I))
+            return (int(intermediary), -int(mandate), -int(strong), -int(bool(dated)), youngest, -len(group), name.lower())
         ordered = sorted(grouped.values(), key=discovery_priority)
         accounts = [{"company": group[0]["company"], "aliases": []} for group in ordered[:settings["max_accounts"]]]
     else:
@@ -92,10 +119,10 @@ def analyse(entries: list[dict], mode: str, watchlist: str, settings: dict, now:
         rows.append(score_account(account["company"], jobs, news, settings, account["aliases"]))
     rows.sort(key=lambda row: (-row["score"], row["company"].lower()))
     return {
-        "scanned_at": now.isoformat(), "mode": mode, "account_count": len(rows),
+        "scanned_at": now.isoformat(), "mode": mode, "profile_name": settings["profile_name"], "scan_key": scan_key(mode, watchlist, settings), "account_count": len(rows),
         "job_count": len(jobs), "request_count": len(entries), "errors": errors or [],
         "partial": bool(errors), "weights": settings["weights"], "accounts": rows,
-        "method": "Single snapshot. Only dated evidence within 30 days contributes points; company identity and ICP fit remain separate judgments.",
+        "method": "Scores use matching jobs and company news from the past 30 days.",
     }
 
 
@@ -119,7 +146,7 @@ def collect(mode: str, watchlist: str, settings: dict, api_key: str) -> tuple[di
         preview = analyse(entries, mode, watchlist, settings)
         accounts = [{"company": row["company"], "aliases": []} for row in preview["accounts"]]
     for account in accounts:
-        params = _news_query(account)
+        params = _news_query(account, settings)
         try:
             entries.append({"stage": "news", "company": account["company"], "params": params, "response": client.search(params)})
         except BudgetExceeded:
@@ -148,4 +175,5 @@ def replay(path: Path) -> dict:
         return analyse(archive["entries"], archive["mode"], archive.get("watchlist", ""), archive.get("settings", DEFAULT), now)
     previous = archive["report"]
     now = datetime.fromisoformat(previous["scanned_at"])
-    return analyse(archive["entries"], previous["mode"], archive.get("watchlist", ""), archive.get("settings", DEFAULT), now, previous.get("errors", []))
+    report = analyse(archive["entries"], previous["mode"], archive.get("watchlist", ""), archive.get("settings", DEFAULT), now, previous.get("errors", []))
+    return annotate_comparison(report, archive.get("previous_report"))

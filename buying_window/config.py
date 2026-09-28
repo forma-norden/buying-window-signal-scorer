@@ -1,64 +1,114 @@
-"""Validated local settings and the GTM/RevOps starter lens."""
+"""Small, editable signal profiles for different B2B buying-window hypotheses."""
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 CONFIG_PATH = DATA / "config.json"
 
-DEFAULT = {
-    "role_queries": ["revenue operations", "sales operations"],
+BASE = {
+    "profile_name": "Growth & expansion",
+    "role_queries": ["operations manager", "business development manager"],
     "roles": {
-        "strong": ["revenue operations", "revops", "sales operations", "sales ops"],
-        "adjacent": ["gtm operations", "go-to-market operations", "commercial operations"],
+        "strong": ["operations manager", "business development manager"],
+        "adjacent": ["project manager", "general manager", "head of operations"],
     },
-    "mandate_terms": ["first dedicated revops hire", "crm isn't fully configured", "tooling stack is unevaluated", "gtm systems architecture", "evaluate and implement", "select and implement", "own the tech stack", "build the systems"],
+    "mandate_terms": ["build the team", "scale operations", "new market", "new office", "expand our", "implement new systems"],
+    "news_query": "funding OR expansion OR appoints",
     "events": {
-        "funding": ["funding", "raises", "raised", "series a", "series b", "series c"],
-        "leadership": ["chief revenue officer", "chief sales officer", "cro appointment", "vp sales", "head of sales", "vp revenue"],
+        "funding": ["funding", "series a", "series b", "investment", "raises"],
+        "expansion": ["expands", "expansion", "new office", "new market", "opens office"],
+        "leadership": ["appoints", "new ceo", "new chief executive", "new president"],
     },
     "weights": {"role": 40, "recency": 20, "news": 25, "convergence": 15},
-    "locations": [
-        {"label": "United States", "gl": "us"},
-        {"label": "United Kingdom", "gl": "uk"},
-    ],
-    "max_accounts": 50,
-    "max_requests": 150,
+    "locations": [{"label": "United States", "gl": "us"}],
+    "max_accounts": 6,
+    "max_requests": 20,
 }
+
+
+def _profile(**changes):
+    value = json.loads(json.dumps(BASE))
+    value.update(changes)
+    return value
+
+
+PRESETS = {
+    "growth": _profile(),
+    "hiring": _profile(
+        profile_name="Hiring & team buildout",
+        role_queries=["software engineer", "marketing manager"],
+        roles={"strong": ["software engineer", "marketing manager"], "adjacent": ["product manager", "engineering manager", "recruiter"]},
+        mandate_terms=["build the team", "grow the team", "new team", "first hire", "scale our hiring", "hire and develop"],
+        news_query="funding OR hiring OR expansion",
+        events={"funding": ["funding", "series a", "series b", "investment"], "expansion": ["hiring", "expansion", "new office", "opens office"]},
+    ),
+    "leadership": _profile(
+        profile_name="New leadership",
+        role_queries=["head of engineering", "head of marketing"],
+        roles={"strong": ["head of engineering", "head of marketing"], "adjacent": ["vp engineering", "vp marketing", "chief technology officer"]},
+        mandate_terms=["build the team", "new strategy", "lead the transformation", "modernize", "modernise", "implement new systems"],
+        news_query="appoints OR names OR new leadership",
+        events={"leadership": ["appoints", "named", "new ceo", "new cto", "new chief", "joins as"]},
+    ),
+    "revops": _profile(
+        profile_name="Revenue operations",
+        role_queries=["revenue operations", "sales operations"],
+        roles={"strong": ["revenue operations", "revops", "sales operations", "sales ops"], "adjacent": ["gtm operations", "commercial operations"]},
+        mandate_terms=["first dedicated revops hire", "crm isn't fully configured", "gtm systems architecture", "evaluate and implement", "own the tech stack", "build the systems"],
+        news_query="funding OR appoints OR chief revenue officer",
+        events={"funding": ["funding", "series a", "series b", "investment", "raises"], "leadership": ["appoints", "chief revenue officer", "vp sales", "head of sales"]},
+    ),
+}
+
+DEFAULT = PRESETS["growth"]
 
 
 def validate(settings: dict) -> dict:
     if not isinstance(settings, dict):
         raise ValueError("Settings must be a JSON object")
     result = json.loads(json.dumps(DEFAULT))
-    for name in ("role_queries", "roles", "mandate_terms", "events", "weights", "locations", "max_accounts"):
+    for name in result:
         if name in settings:
             result[name] = settings[name]
-    for name in ("role_queries",):
-        if not isinstance(result[name], list) or not 1 <= len(result[name]) <= 6 or not all(isinstance(x, str) and 2 <= len(x.strip()) <= 60 for x in result[name]):
-            raise ValueError("Enter 1–6 role queries of 2–60 characters")
-    for bucket in ("roles", "events"):
-        value = result[bucket]
-        if not isinstance(value, dict) or not value or any(not isinstance(items, list) or not items or any(not isinstance(x, str) or not x.strip() for x in items) for items in value.values()):
-            raise ValueError(f"{bucket} must map labels to non-empty phrase lists")
-    if not isinstance(result["mandate_terms"], list) or not 1 <= len(result["mandate_terms"]) <= 30 or any(not isinstance(x, str) or not 3 <= len(x.strip()) <= 100 for x in result["mandate_terms"]):
-        raise ValueError("Enter 1–30 mandate phrases of 3–100 characters")
+    if not isinstance(result["profile_name"], str) or not 3 <= len(result["profile_name"].strip()) <= 80:
+        raise ValueError("Give the profile a name of 3–80 characters")
+    if not isinstance(result["role_queries"], list) or not 1 <= len(result["role_queries"]) <= 6 or any(not isinstance(x, str) or not 2 <= len(x.strip()) <= 60 for x in result["role_queries"]):
+        raise ValueError("Enter 1–6 job search phrases of 2–60 characters")
+    roles = result["roles"]
+    if not isinstance(roles, dict) or set(roles) != {"strong", "adjacent"} or any(not isinstance(v, list) or not v or any(not isinstance(x, str) or not x.strip() for x in v) for v in roles.values()):
+        raise ValueError("Set strong and adjacent job-title phrases")
+    terms = result["mandate_terms"]
+    if not isinstance(terms, list) or not 1 <= len(terms) <= 30 or any(not isinstance(x, str) or not 3 <= len(x.strip()) <= 100 for x in terms):
+        raise ValueError("Enter 1–30 job-description phrases")
+    if not isinstance(result["news_query"], str) or not 3 <= len(result["news_query"].strip()) <= 150:
+        raise ValueError("Enter a news search phrase of 3–150 characters")
+    events = result["events"]
+    if not isinstance(events, dict) or not 1 <= len(events) <= 6 or any(not isinstance(label, str) or not label.strip() or not isinstance(values, list) or not values or any(not isinstance(x, str) or not x.strip() for x in values) for label, values in events.items()):
+        raise ValueError("News event groups must contain at least one phrase")
     weights = result["weights"]
-    if set(weights) != {"role", "recency", "news", "convergence"} or any(type(v) is not int or v < 0 or v > 100 for v in weights.values()) or sum(weights.values()) != 100:
+    if not isinstance(weights, dict) or set(weights) != {"role", "recency", "news", "convergence"} or any(type(v) is not int or not 0 <= v <= 100 for v in weights.values()) or sum(weights.values()) != 100:
         raise ValueError("The four weights must be whole numbers that sum to 100")
     locations = result["locations"]
-    if not isinstance(locations, list) or not 1 <= len(locations) <= 3 or any(not isinstance(x, dict) or not isinstance(x.get("label"), str) or x.get("gl") not in ("us", "uk") for x in locations):
-        raise ValueError("Choose 1–3 US/UK locations")
+    if not isinstance(locations, list) or len(locations) != 1 or not isinstance(locations[0], dict) or not isinstance(locations[0].get("label"), str) or not locations[0]["label"].strip() or not re.fullmatch(r"[a-z]{2}", str(locations[0].get("gl", ""))):
+        raise ValueError("Enter one market label and two-letter country code")
     if type(result["max_accounts"]) is not int or not 1 <= result["max_accounts"] <= 50:
         raise ValueError("max_accounts must be between 1 and 50")
+    if type(result["max_requests"]) is not int or not 2 <= result["max_requests"] <= 150:
+        raise ValueError("max_requests must be between 2 and 150")
     return result
 
 
 def load() -> dict:
     if CONFIG_PATH.exists():
-        return validate(json.loads(CONFIG_PATH.read_text(encoding="utf-8")))
+        saved = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+        # Earlier releases saved a RevOps-only lens. Keep that file for the
+        # owner, but start the new interface with the broadly useful preset.
+        if "profile_name" in saved:
+            return validate(saved)
     return validate({})
 
 

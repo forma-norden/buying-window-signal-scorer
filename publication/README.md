@@ -1,14 +1,10 @@
-# Publication pack
+# Publication copy
 
-These are four distinct, complete pieces based on the 28 September 2026 bounded live run. They are stored with the code so the claims, lens and limitations can be checked before posting.
-
-| File | Destination | Use |
+| File | Destination | Angle |
 | --- | --- | --- |
-| `forma-norden-blog.md` | Forma Nôrden blog | Full implementation case study. A copy and claim ledger live in the site's `content/blog/proposals/revops-hiring-signals-searchapi-account-research/`. The site's editorial release gate must accept it before publication. |
-| `dev-article.md` | DEV Community | Result-led developer story with code, table and false-positive lesson. Paste the body and set its listed title, description and tags in DEV. Set a canonical URL only after the Forma Nôrden blog page is live. |
-| `linkedin-pulse-article.md` | LinkedIn article | Decision-oriented article with title, subtitle and cover-text suggestion in front matter. Paste the body into the LinkedIn article editor. |
-| `linkedin-launch-post.md` | LinkedIn feed | Short launch post to accompany the article. |
+| [DEV article](dev-article.md) | DEV Community | Build and run a configurable, source-linked search from Jobs and News data |
+| [LinkedIn article](linkedin-pulse-article.md) | LinkedIn Pulse | A practical weekly method for finding a relevant reason to contact a company |
+| [LinkedIn post](linkedin-launch-post.md) | LinkedIn feed | Short launch copy for the article and repository |
+| [Forma Nôrden blog](forma-norden-blog.md) | Forma Nôrden site | Full method, worked example, live check, request economics, and FAQs |
 
-The live scan measured HTTP requests and returned listings, not purchases, pipeline or conversion. Employer-controlled postings were checked on 28 September and can change. The public repository includes the dated summary and scoring configuration, while raw live API responses and the API key stay local. All pieces disclose SearchApi's supplied credits.
-
-The named poster should verify current links, platform rendering and the sponsor's publication requirements before posting. This is a release check, not a request for a human rewrite of the copy.
+Each article has its own introduction and structure. The DEV and LinkedIn articles are complete copy for their respective editors. The site blog copy is complete, but the site's existing editorial release process controls when it is published. The dated observations come from [the live-run note](../docs/live-run-2026-09-28.md); the worked 100-point example is labelled fictional.

@@ -1,89 +1,78 @@
 ---
-title: "We Built a RevOps Buying-Signal Scanner. Its Top Result Was Wrong."
-description: "A SearchApi Google Jobs + News project found 35 relevant roles in 16 requests. The false positive was more instructive than the leaderboard."
-tags: python, opensource, sales, api
-published: false
+title: I built an open-source tool that turns job posts into a “why now?” list
+description: A small Python app that combines Google Jobs and company news into an inspectable buying-window research queue.
+tags: python, opensource, api, sales
 ---
 
-# We built a RevOps buying-signal scanner. Its top result was wrong.
+# I built an open-source tool that turns job posts into a “why now?” list
 
-We wanted a short list of B2B SaaS accounts whose public hiring and company news suggested a real operations project. Our first version produced a beautiful 100/100 result for **NICE**. The job was attributed to a software company called NICE. The news was about the unrelated UK health body of the same name.
+A list of companies in your target industry tells you *who* might be relevant. It does not tell you why this week is a sensible time to talk.
 
-That mistake changed the build. The open-source [Buying Window Signal Scorer](https://github.com/forma-norden/buying-window-signal-scorer) now shows uncertain matches without awarding them points. It treats a score as a research priority, never as proof that a company intends to buy.
+A job post can answer a more useful question. If a company is hiring its first operations manager to open a new market, someone has budgeted for a change. That does not mean the company wants your software or service. It gives you a concrete reason to look closer. Pair the posting with a recent expansion announcement, and you have two source documents to inspect instead of a generic “growing company” label.
 
-**TL;DR:** A live US/UK run on 28 September 2026 made **16 SearchApi requests**, found **35 deduplicated relevant job listings**, and carried **12 employers** into a news check. Three job descriptions described a concrete operations mandate. **Zero** news events passed our date and identity rules. The project includes a local dashboard, editable scoring lens, request cap, source drilldown, exports, demo fixture, replay and tests.
+I built [Buying Window Signal Scorer](https://github.com/forma-norden/buying-window-signal-scorer) to make that research repeatable. It is a local Python app, open source and MIT licensed. You choose which roles, description phrases, and news events matter to **your** offer. It searches Google Jobs and Google News through SearchApi, scores the matches, and keeps the source links next to every point.
 
-## Why build another signal tool?
+## Run it with your own search
 
-“Hiring RevOps” is easy to search. It is hard to use responsibly. The search result might be stale, the employer might be a recruiter, and a generic job title rarely tells you what systems work is happening. Adding company news can help, but it can also amplify a homonym like NICE.
-
-We wanted a tool where an operator can answer five questions before contacting an account: **What was observed? When? At which employer? What exact work does the description imply? What still needs verification?** That is a narrower and more useful goal than predicting purchase intent.
-
-The input comes from [SearchApi's Google Jobs](https://www.searchapi.io/docs/google-jobs) and [Google News](https://www.searchapi.io/docs/google-news) endpoints. The app runs on your machine; no hosted dashboard or database is needed. The two modes are discovery across configured role and location searches, and a named watchlist of up to 50 accounts.
-
-## The small scoring model
-
-The default lens awards at most 100 points:
-
-| Signal | Max | Rule |
-| --- | ---: | --- |
-| Role relevance | 40 | Strong or adjacent title, with extra weight for a configured job-description mandate |
-| Job recency | 20 | Dated role within 7 days: 20; within 30 days: 12 |
-| Qualified news | 25 | Recent funding or commercial leadership event linked confidently to the company |
-| Convergence | 15 | Both a recent job and qualified news |
-
-An old or undated posting stays in the results but scores zero. A questionable news match stays visible but cannot create news or convergence points. The role terms, mandate phrases, news events and weights are editable in the UI. ICP fit is marked separately because a text match cannot know your customers, exclusions or sales territories.
-
-The code is intentionally deterministic. The relevant shape is:
-
-```python
-recent_job = job_age is not None and job_age <= 30
-qualified_news = (
-    news_age is not None
-    and news_age <= 30
-    and identity_confidence != "low"
-)
-convergence = recent_job and qualified_news
-```
-
-The [full scorer](https://github.com/forma-norden/buying-window-signal-scorer/blob/main/buying_window/core.py) also handles title fit, description excerpts, duplicate listings and source URLs. The important product choice is that the UI exposes the evidence and flags alongside the score.
-
-## What the live run found
-
-We used two SaaS-qualified role searches in the US and UK: four Jobs queries, followed by 12 employer News queries. The dated [run note and exact lens](https://github.com/forma-norden/buying-window-signal-scorer/blob/main/docs/live-run-2026-09-28.md) are in the repo.
-
-| Account | Signal from job description | Score | News points |
-| --- | --- | ---: | ---: |
-| [Safe Software](https://www.safe.com/careers/) | VP, Revenue Operations; CRM not fully configured and AI tooling stack unevaluated | 60 | 0 |
-| [Matia](https://jobs.ashbyhq.com/matia/1b579e8a-0eb6-4c15-90d3-851786caac65) | First dedicated RevOps hire, building GTM foundation | 60 | 0 |
-| [NetBox Labs](https://jobs.ashbyhq.com/netboxlabs/6db20463-5f41-4aaa-8118-081c76e4f01f) | Senior Sales Ops role with GTM systems architecture | 60 | 0 |
-
-We checked the employer-controlled career or ATS pages separately on 28 September. Those links can change as roles close. The three accounts received the same points for different reasons; a salesperson still needs to confirm employer identity, current need, ICP fit and an appropriate offer. The scan does **not** show that any of them are buying software.
-
-## The 100-point false positive
-
-Our original news rule searched the headline for the company name and event words. It was too generous for a short name. A result about the UK National Institute for Health and Care Excellence was paired with a Jobs result attributed to NICE software. The formula then added news and convergence points and placed NICE at 100.
-
-We changed the rule so one-word ambiguous names and snippet-only mentions are treated as low-confidence. The candidate article remains inspectable, but its news and convergence points are zero. NICE ended at **45** from a dated job title alone. A regression test covers that exact failure.
-
-This was more consequential than tuning a weight from 20 to 25. A precise-looking score can hide an identity mistake. We would rather see “review company identity” next to a plausible listing than have an unexplained top account in an export.
-
-## Try the local demo
-
-The demo uses explicitly fictional response data and makes no paid calls:
+Get a [SearchApi key](https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) first. Its [pricing page](https://www.searchapi.io/pricing) currently offers 100 free requests on signup. Then:
 
 ```bash
-git clone https://github.com/forma-norden/buying-window-signal-scorer
+git clone https://github.com/forma-norden/buying-window-signal-scorer.git
 cd buying-window-signal-scorer
 python -m venv .venv
+# macOS/Linux: source .venv/bin/activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
 python -m pip install -e .
 python -m buying_window.cli serve
 ```
 
-Open `http://127.0.0.1:8765` and click **Explore demo**. To run live queries, copy `.env.example` to `.env`, add `SEARCHAPI_API_KEY`, and check the request estimate before starting. The app caps attempts at 150, including retries, and marks partial runs when a request fails. It can export CSV/JSON and replay a redacted local response archive without another API call.
+Copy `.env.example` to `.env`, add `SEARCHAPI_API_KEY=your_key`, and open `http://127.0.0.1:8765`. Select a profile, check the request estimate, and run a live scan. The ignored `.env` file stays on your computer. A fictional sample is available if you want to inspect the interface before spending a request.
 
-The key stays local and is excluded from Git. The public repository contains code, a fictional fixture, the dated run methodology and tests; it does not contain the live API responses. Search coverage and results will change on a future run, and request count is not a dollar cost estimate for your SearchApi plan.
+## The useful part is deciding what to search for
 
-If you use this for outbound, make the **original posting** the start of account research, not the end. Confirm the employer, date and mandate, check your CRM, then decide whether any contact is warranted. A score can help choose what to read next. It should not write the buyer's story for you.
+The default profile looks for operations and business development roles alongside expansion, funding, and leadership news. It is a starting point, not a universal definition of a buying window.
 
-**Disclosure:** SearchApi supplied API credits for this Developer Ambassador collaboration. Forma Nôrden chose the use case and reports the failure and limits alongside the results. [SearchApi](https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) supplies the Google Jobs and News data used by the project.
+Suppose you sell warehouse planning software. Search for an operations manager or distribution lead, match job descriptions mentioning a new market or scaled operations, and look for distribution-centre news. If you recruit marketers, search for the marketing roles you can fill and for language about building a new team. If you implement CRMs, use the included revenue-operations profile and tune it to system ownership and migration language.
+
+The dashboard exposes the search phrases, title matches, description phrases, news event groups, market, and score weights. No code change is required to try a different hypothesis. You can discover employers from job results or paste a watchlist of companies you already care about.
+
+Under the hood, the two paths start differently:
+
+```python
+# Discovery: find employers in relevant Google Jobs results.
+{"engine": "google_jobs", "q": "operations manager", "location": "United States", "gl": "us"}
+
+# Watchlist: search for a known employer and your chosen roles.
+{"engine": "google_jobs", "q": "Harbor Foods operations manager OR business development manager", "location": "United States", "gl": "us"}
+```
+
+In both paths, the scorer checks the returned employer field before assigning a job to a company. An article about a company is checked against the company name and the selected event terms. [SearchApi's Jobs](https://www.searchapi.io/docs/google-jobs) and [News](https://www.searchapi.io/docs/google-news) endpoints provide the source results; the matching and scoring rules are local and readable in the repository.
+
+## What earns 100 points?
+
+The default score has four parts. A strong title and relevant job-description phrase can earn 40 points. A matching job posted in the last week earns 20. A dated, identity-supported company news event earns 25. Having both qualified signals earns another 15. You can change the weights as long as they total 100.
+
+Here is a **fictional** example from the bundled sample: Harbor Foods has a recent operations manager listing that says the hire will build a team for a new market, plus a dated expansion article. The tool shows the job and article links, the matched description excerpt, and the 40 + 20 + 25 + 15 breakdown. You can replay that fixture without a key. The real value is seeing which source supplied each part of the score.
+
+For a live sanity check on 28 September 2026, I ran the growth profile with a three-company limit. Two Jobs requests returned **19 relevant, deduplicated listings**; three News requests checked the selected employers. The scan used **five requests** and completed without a failed request. The selected companies each earned 45 points from a recent matching title; no news item earned points in that run. That result is less flashy than a perfect score, but it gives a useful next action: inspect the job descriptions and widen or refine the profile if the mandate is too weak.
+
+The app keeps ambiguous news visible for review while withholding news points. It also flags likely recruiters and job boards. A posting date can be missing; an undated listing remains visible without recency points. These rules make the ranking easier to challenge when a search result looks plausible at first glance.
+
+## Make repeat scans useful without pretending to detect publication dates
+
+Run the same profile again and the app marks job and news IDs absent from the previous matching scan as **first seen in your results**. This is a small but important distinction: an item might have been published earlier and missed by the previous query. The label is a change in your observed results, not a claim about when the internet first saw it.
+
+Every run has an estimate and a hard API attempt cap that includes retries. The local app saves a redacted raw-response archive and exports CSV or JSON. You can replay an archive to change the scoring code without buying the same searches again:
+
+```bash
+python -m buying_window.cli replay data/raw/<archive-name>.json
+python -m unittest discover -s tests -v
+```
+
+The code is intentionally small: `core.py` holds pure parsers and scoring rules, `runner.py` plans searches and comparisons, and `webapp.py` serves the local dashboard. The repository includes tests, a fictional fixture, and the exact notes for the bounded live check.
+
+If you try it, I would start with one offer and one market. Which job description would make you say, “we can help with that change”? Put those words in a profile, run the smallest useful scan, and inspect the original sources before acting on the score.
+
+[Explore the repository and run your own scan](https://github.com/forma-norden/buying-window-signal-scorer).
+
+*Disclosure: SearchApi provided API credits for this project. Forma Nôrden built the application and scoring rules.*

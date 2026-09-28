@@ -1,7 +1,7 @@
 [project]
 name = "buying-window-signal-scorer"
 version = "0.1.0"
-description = "Evidence-led account prioritisation from Google Jobs and Google News"
+description = "Open-source B2B prospecting from Google Jobs and Google News buying signals"
 requires-python = ">=3.11"
 license = "MIT"
 dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1"]

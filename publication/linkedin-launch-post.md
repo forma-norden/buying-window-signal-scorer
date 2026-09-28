@@ -1,13 +1,13 @@
-We ran a RevOps hiring-signal scan across US and UK SaaS roles. The first leaderboard gave NICE 100/100—because it combined a software company's job with news about an unrelated UK health body of the same name.
+Most prospect lists answer “who fits?”
 
-We fixed the identity rule and published the tool, tests and dated run notes.
+They rarely answer “why talk now?”
 
-The corrected scan used 16 SearchApi requests, found 35 relevant job listings and shortlisted 12 employers. Three descriptions showed a concrete operations mandate. No news event passed the identity and date checks, so news added zero points.
+We built a small open-source tool that looks for that second answer in public job posts and company news. You choose the roles, job-description phrases, and events that matter to your offer. It ranks the companies it finds and shows the source behind every point.
 
-That is the point of the build: a public signal should tell you what to investigate, with its source and uncertainty attached. It cannot tell you that an account is buying.
+There are starter profiles for growth, team buildout, new leadership, and revenue operations. You can also check a watchlist, set an API request limit, and export the results.
 
-The article covers the scoring model, the false positive and a five-step account review. The local dashboard and fictional demo are open source: https://github.com/forma-norden/buying-window-signal-scorer
+The important step still happens after the scan: read the posting, verify the employer, and decide whether the change is one you can actually help with.
 
-SearchApi supplied API credits for this project. The observed results and limitations are ours. https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com
+I wrote up the approach in the LinkedIn article. The app and setup steps are here: https://github.com/forma-norden/buying-window-signal-scorer
 
-#RevOps #GTMEngineering #OpenSource
+SearchApi provided API credits for the build.

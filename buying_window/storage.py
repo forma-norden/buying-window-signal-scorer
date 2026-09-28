@@ -1,4 +1,4 @@
-"""Latest snapshot and local raw-response archive; no credentials are persisted."""
+"""Latest snapshot and redacted response archive."""
 from __future__ import annotations
 
 import json
@@ -7,7 +7,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .config import DATA
-
 
 def redact(value):
     if isinstance(value, dict):
@@ -19,7 +18,7 @@ def redact(value):
     return value
 
 
-def save_run(report: dict, entries: list[dict], settings: dict, watchlist: str = "") -> Path:
+def save_run(report: dict, entries: list[dict], settings: dict, watchlist: str = "", previous_report: dict | None = None) -> Path:
     DATA.mkdir(exist_ok=True)
     raw_dir = DATA / "raw"
     raw_dir.mkdir(exist_ok=True)
@@ -29,7 +28,7 @@ def save_run(report: dict, entries: list[dict], settings: dict, watchlist: str =
     while path.exists():
         path = raw_dir / f"{stamp}-{suffix}.json"
         suffix += 1
-    path.write_text(json.dumps(redact({"report": report, "entries": entries, "settings": settings, "watchlist": watchlist}), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(redact({"report": report, "entries": entries, "settings": settings, "watchlist": watchlist, "previous_report": previous_report}), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     latest = DATA / "latest.json"
     temp = latest.with_suffix(".tmp")
     temp.write_text(json.dumps(redact(report), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

@@ -1,87 +1,87 @@
 # Buying Window Signal Scorer
 
-An open-source, local dashboard for prioritising B2B accounts from [SearchApi Google Jobs](https://www.searchapi.io/docs/google-jobs) and [Google News](https://www.searchapi.io/docs/google-news). It combines a hiring signal with company news, but keeps the evidence and uncertainty visible. A score is a research priority, **not a prediction that an account will buy**.
+**Find companies showing the changes your offer can help with.** This small, open-source app turns [Google Jobs](https://www.searchapi.io/docs/google-jobs) and [Google News](https://www.searchapi.io/docs/google-news) results into a source-linked research queue. You choose the hiring and company events. The scorer shows why each company appeared and how it earned its score.
 
-Built by [Forma Nôrden](https://formanorden.com/open-source/) as a companion to the [Buying Window Signal Workflow](https://github.com/forma-norden/buying-window-signal-workflow) and [Signal-Based List Building Workflow](https://github.com/forma-norden/signal-based-list-building-workflow).
+It is useful for consultants, agencies, software teams, recruiters, and founders researching B2B prospects. The default looks for growth and expansion; you can switch to team buildout, new leadership, revenue operations, or your own profile.
 
-![Dashboard showing an evidence-led account list](docs/dashboard.png)
+![Buying Window Signal Scorer with profile cards and live-search setup](docs/dashboard.png)
 
-## Try it in two minutes
+## Get started
 
-Requires Python 3.11 or newer.
+**Prerequisites:** Python 3.11+ and a [SearchApi account](https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com). SearchApi currently offers **100 free requests** when you sign up; [check its pricing page](https://www.searchapi.io/pricing) for the current allowance.
 
 ```bash
+git clone https://github.com/forma-norden/buying-window-signal-scorer.git
+cd buying-window-signal-scorer
 python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
+```
+
+Activate the environment and install the app:
+
+```bash
+# macOS / Linux
+source .venv/bin/activate
+
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+
 python -m pip install -e .
+```
+
+Copy `.env.example` to `.env` in the project folder and set `SEARCHAPI_API_KEY=your_key`. The `.env` file is ignored by Git. You can also set that environment variable in your shell. Then start the app:
+
+```bash
 python -m buying_window.cli serve
 ```
 
-Open **http://127.0.0.1:8765** and choose **Explore demo**. The bundled fixture is fictional and labelled as demo data; it makes no API calls.
+Open **http://127.0.0.1:8765**, choose a profile and market, review the request estimate, and select **Run live scan**.
 
-For live searches, copy `.env.example` to `.env`, add `SEARCHAPI_API_KEY=...`, then choose **Run live scan**. The dashboard binds to your computer only. Do not commit `.env`.
+Want to see the interface first? **View growth sample** loads a fictional fixture without an API key or API requests.
 
-## Two ways to scan
+## Start with a question you can act on
 
-- **Discover employers:** Search relevant roles across the configured US/UK locations, group the employers returned by Google Jobs, then query Google News for the highest-priority employers. The default limit is 50 accounts; edit it in the dashboard.
-- **Check a watchlist:** Paste up to 50 company names, one per line. Optional aliases use `Company | alias one, alias two`. Jobs are matched against the employer field, not merely against a search result that happens to mention the name.
+| Your offer | Profile to try | What to adapt |
+| --- | --- | --- |
+| Logistics or process software | Growth & expansion | Operations roles, warehouse or market-opening language, expansion news |
+| Recruiting or training | Hiring & team buildout | Roles you can fill or train, first-team-hire language |
+| Strategy or implementation services | New leadership | Executive roles and appointment news relevant to your market |
+| CRM or sales systems | Revenue operations | RevOps roles, systems mandates and commercial leadership news |
 
-The default lens looks for RevOps and Sales Ops hiring. The dashboard lets you edit search phrases, strong and adjacent roles, job-description mandate phrases, news event terms, four score weights, and the discovery account limit. Settings live in ignored `data/config.json`.
+These are starting points. Edit job searches, title matches, description phrases, news events, score weights, market, and request limit in the dashboard. A profile should express **why a company might need your specific offer now**, not merely whether it is a large or familiar company.
 
-## How the score works
+Choose **Discover companies** to search Jobs for relevant roles and then check company news for the employers found. Choose **Check my watchlist** to paste companies you already know, one per line. Add aliases as `Company | alias one, alias two` when the same employer appears under more than one name.
 
-| Component | Maximum | Rule |
+## Read the score, then open the sources
+
+Each company receives up to **100 points**, from the selected profile's rules:
+
+| Evidence | Default points | What qualifies |
 | --- | ---: | --- |
-| Role relevance | 40 | Strong role title earns 25, adjacent earns 15. A matching operations or tooling mandate in the job description adds up to 15 or 10 respectively. |
-| Job recency | 20 | Latest matching job earns 20 if posted within 7 days, or 12 if posted within 30 days. |
-| Relevant news | 25 | A funding or commercial-leadership event earns points only when dated within 30 days and the company match is sufficiently specific. |
-| Convergence | 15 | Both a recent job and qualifying recent news are present. |
+| Job-title and description match | 40 | A strong or adjacent title, with extra weight for a matching mandate in the description |
+| Job recency | 20 | A matching listing dated within 30 days; the newest week earns more |
+| Company news | 25 | A matching event dated within 30 days and tied to a sufficiently specific company name |
+| Both signals | 15 | A qualifying job and news event appear together |
 
-Undated and older jobs remain visible but do not score. Low-confidence news also remains visible, but cannot earn news or convergence points. This matters for names shared by unrelated organisations: in our first live run, news about the UK health body NICE appeared beside a job attributed to NICE software. The revised scorer withheld those news points. The [dated run notes](docs/live-run-2026-09-28.md) show what the scan actually found.
+Open a result to see the exact listing, article, date, matched phrase, score components, and any review flags. An undated item is visible but earns no recency points. News with a weak company match is visible but earns no news points. The score is a **research priority for your chosen profile**; it cannot establish a purchase decision or whether the company fits your market.
 
-The `identity confidence` indicator describes the **name match**, not the trustworthiness of the publisher. `ICP fit` stays unknown until a person verifies the company against their own market definition. Possible recruiters and job boards are flagged for review, not silently filtered out.
+The app shows a request estimate before a live run and enforces your attempt cap, including retries. A default discovery scan uses at most eight initial searches: two Jobs queries and news checks for up to six companies. Results can be downloaded as CSV or JSON, with redacted raw responses archived locally for inspection.
 
-## Cost and reproducibility
-
-Before a live run, the UI shows an upper bound for initial requests. The run has a hard limit of **150 HTTP attempts**, including retries; any failed request stays visible as a partial-result warning. The budget is a request count, not a claim about your SearchApi bill. Check the credits and pricing on your own plan.
-
-Each live run writes the latest report to `data/latest.json` and a redacted raw-response archive to `data/raw/`. Both directories are ignored by Git. The dashboard exports the latest account table as CSV or JSON and offers the last raw archive for inspection. Re-score an archive without API calls:
+Run the same settings again to mark listings and articles **first seen in your scan results**. That label does not claim the item was first posted that day. Re-score a saved raw archive without another API call:
 
 ```bash
 python -m buying_window.cli replay data/raw/<archive-name>.json
 ```
 
-For a repeatable live CLI scan using the saved lens:
+## Where this fits
 
-```bash
-python -m buying_window.cli scan --mode discovery --max-accounts 12
-```
+This app helps **find and inspect** possible buying windows. Use Forma Nôrden's [Signal-Based List Building Workflow](https://github.com/forma-norden/signal-based-list-building-workflow) to develop the wider source list and the [Buying Window Signal Workflow](https://github.com/forma-norden/buying-window-signal-workflow) to decide who owns a verified signal and what happens next. The scorer stays deliberately small: one local dashboard, two SearchApi engines, editable rules, and exportable evidence.
 
-The [case-study lens](examples/case-study-settings.json) documents the US/UK SaaS search used for the dated run. Copy it to ignored `data/config.json` to reproduce those parameters. Results will change as listings and news change.
-
-## Limitations
-
-- Google Jobs can attribute a posting to a recruiter or job board rather than the hiring company. The tool flags likely intermediaries; verify the employer before outreach.
-- The API does not reliably supply an employer domain. Name matching alone cannot establish corporate identity, especially for short or common names.
-- Posting dates are often relative or absent. An absent date earns no points; a relative date is interpreted against the scan time.
-- A role and a news article do not prove procurement intent. Job descriptions, official careers pages, news context, and your ICP still require review.
-- This is one snapshot, not a trend detector. It does not claim that a job is new because it appears in today's scan.
-
-## Tests and project layout
+## Develop and verify
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-`buying_window/core.py` contains the pure matching and scoring logic. `searchapi.py` bounds API attempts. `runner.py` plans and analyses scans. `webapp.py` serves the local dashboard. `examples/demo-responses.json` is a fictional, key-free fixture. The tests cover date and response parsing, deduplication, ambiguous identity, score behaviour, budgets, and credential redaction. CI runs them on Python 3.11 and 3.13.
+The core matching and scoring rules are in `buying_window/core.py`; search planning is in `runner.py`; the local API and dashboard are in `webapp.py` and `web/`. `examples/demo-responses.json` contains fictional sample data. [The dated run note](docs/live-run-2026-09-28.md) records a bounded live check separately from this getting-started guide. [Publication drafts](publication/README.md) are also in the repository.
 
-## Partnership
-
-This project was built for a SearchApi Developer Ambassador collaboration. SearchApi supplied API credits for testing. Forma Nôrden chose the use case, wrote the code, and reports the observed limitations and results. [SearchApi](https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) provides the Google Jobs and Google News data used here.
-
-MIT licensed. See [LICENSE](LICENSE).
-
-## Publication pack
-
-The [site blog, DEV article, LinkedIn article, and LinkedIn launch post](publication/README.md) are written from the same dated run, with different reader angles and platform formats. The Forma Nôrden blog draft follows the site's separate editorial release gate.
+Google Jobs may attribute a listing to a recruiter, and a short company name may match unrelated news. Confirm the employer and read the source before outreach. SearchApi provided API credits for this project; Forma Nôrden built the app and its scoring rules. Released under the [MIT licence](LICENSE).

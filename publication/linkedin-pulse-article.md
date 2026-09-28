@@ -1,53 +1,43 @@
----
-title: "What a RevOps Job Posting Can Tell You About an Account—and What It Cannot"
-subtitle: "We tested a public-signal research workflow across US and UK SaaS hiring. The most useful result was a false positive we could explain."
-surface: LinkedIn article
-date: 2026-09-28
-cover_text: "A hiring signal is a research prompt, not a buying prediction"
----
+# How to find a real reason to contact a company this week
 
-# What a RevOps job posting can tell you about an account—and what it cannot
+*A practical way to connect public hiring and company news to the problem your offer solves.*
 
-A company posting a Revenue Operations role may be reorganising its GTM systems. It may also be backfilling a routine position. Both look like a “hiring signal” in a search result.
+“They are growing” is rarely enough to write a useful first message. Growth can mean a new territory, a delayed rollout, a team without a manager, or simply another role on a careers page. Those situations create different needs.
 
-If you run outbound, the difference matters. The first case may justify thoughtful account research. The second may be irrelevant. Neither gives you permission to claim that the company is shopping for a vendor.
+The better question is: **what changed at this company, and does that change make our help relevant?**
 
-We built an [open-source buying-window signal scorer](https://github.com/forma-norden/buying-window-signal-scorer) to test a narrower proposition: can recent job descriptions and company news help a team decide **which accounts to investigate first**, while keeping the evidence and its uncertainty in view?
+Job descriptions are a surprisingly direct place to look. A title tells you the function. The description can tell you what the person is expected to build, fix, or expand. Company news can provide another piece of context. The two sources are public, dated when the publisher supplies a date, and available for a prospect to verify.
 
-## The result of one bounded scan
+That was the idea behind [Buying Window Signal Scorer](https://github.com/forma-norden/buying-window-signal-scorer), a small open-source app we built at Forma Nôrden. It searches Google Jobs and Google News through SearchApi, then assembles a research queue with the original sources beside each company. It works with a watchlist or can discover employers from roles that matter to your offer.
 
-On 28 September 2026, we ran two SaaS-qualified role searches in the United States and United Kingdom through SearchApi's Google Jobs endpoint. We checked company news for the 12 employers selected from those results. The run made **16 API requests**, returned **35 deduplicated relevant job listings**, and found **three selected employers whose descriptions contained a concrete operations mandate**. No news event passed our date and company-identity checks, so news added no points.
+## Start with your offer, not a generic intent label
 
-Three examples show why reading the description is more useful than counting vacancies:
+Imagine three teams:
 
-- [Safe Software's careers page](https://www.safe.com/careers/) listed a VP, Revenue Operations role. The returned description said its CRM was not fully configured and its AI tooling stack was unevaluated.
-- [Matia's role](https://jobs.ashbyhq.com/matia/1b579e8a-0eb6-4c15-90d3-851786caac65) was described as its first dedicated RevOps hire, tasked with building the GTM foundation.
-- [NetBox Labs' role](https://jobs.ashbyhq.com/netboxlabs/6db20463-5f41-4aaa-8118-081c76e4f01f) focused on pipeline, forecasting and GTM systems architecture.
+- A logistics software company wants to find distributors opening a new market. Operations roles, new locations, and distribution expansion matter.
+- A recruiting firm wants to find companies building a marketing function. “First marketing hire” or a cluster of relevant roles matters more than a funding headline alone.
+- A systems consultancy wants to find companies hiring a new head of operations to standardise processes. The mandate in the job description matters more than the title by itself.
 
-All three scored **60/100** under this project's rules. That does not make them equal opportunities. A CRM configuration problem, a first operations hire and a systems architecture remit call for different research, different expertise and perhaps no outreach at all. We checked the employer-controlled pages on the day of the run; openings can change or close.
+All three can use the same data sources. They should **not** use the same definition of a good lead. The scorer therefore offers editable profiles for growth, team buildout, new leadership, and revenue operations. Each profile is a starting hypothesis. You can change the job queries, strong and adjacent titles, mandate phrases, news events, market, and scoring weights in the dashboard.
 
-## The false positive was the real lesson
+## What the queue actually tells you
 
-The first version briefly scored **NICE** at 100/100. A job was attributed to NICE software; a news article referred to the unrelated UK health body with the same name. The name string matched, so the initial rule gave the account both news and convergence points.
+The default 100-point score gives up to 40 points for a relevant title and job-description mandate, 20 for a recent job, 25 for a recent company event, and 15 when both signals are present. Open a company and you see the job, article, dates, matched text, score parts, and any identity flags. Older or undated material can remain visible without earning recency points.
 
-That is exactly the type of failure a sales team cannot afford to hide behind a score. We changed the logic so short or ambiguous company names remain visible for review but receive no news points without a confident identity match. NICE fell to **45/100**, based only on the recent role. We also flag possible recruiters and job boards because a result's employer field does not always name the ultimate hiring company.
+In a small live check on 28 September 2026, the growth profile used five API requests: two job searches and news checks for three selected employers. The job results contained 19 relevant, deduplicated listings. The three selected employers earned 45 points each from recent role matches; no news result qualified for points. This is an observation about one bounded search, not a measurement of market demand or buying intent. Its value was to show exactly which companies warranted a closer look and why the news did not strengthen the case.
 
-The lesson is operational: **the confidence in an entity match is part of the signal**. If you cannot say which organisation a news story describes, you cannot responsibly combine it with a vacancy.
+If the description says the new hire will open a territory or implement a system, read the full posting and check the employer. If the description only lists routine responsibilities, the timing case may be weak, even if the title matches. A score should shorten the path to that judgment, not replace it.
 
-## A better account research sequence
+## A repeatable weekly practice
 
-For teams using public hiring to guide account research, the sequence should be short and explicit:
+1. Write down the change your offer can help with. Be as specific as “opening a second distribution centre” or “building a first marketing operations team.”
+2. Choose the roles and company events that would make that change visible. Search one market first.
+3. Run a small scan and inspect the top source documents. Confirm that the job belongs to the employer named in the result.
+4. Record the useful companies in your existing account workflow. Keep the job or article link, the date, and the actual mandate.
+5. Re-run the same profile later. The tool marks evidence first seen in *your scan results*, so you can review the changes without mistaking that label for a publication date.
 
-1. **Find a current role relevant to the problem you solve.** Record the title, employer, URL and observed date.
-2. **Read the work to be done.** “RevOps Manager” is broad. “First dedicated RevOps hire” or “own GTM systems architecture” is more specific, but still needs context.
-3. **Confirm the organisation.** Check the employer's own career or applicant-tracking page, especially when a recruiter, job board or common company name appears.
-4. **Check internal fit.** Your CRM may show an existing opportunity, a customer relationship, a territory exclusion or an industry mismatch. A public signal cannot know these things.
-5. **Choose the next action.** Often that is more research. If outreach is appropriate, the message should address a plausible operational problem and avoid pretending to know the company's purchasing plan.
+The app displays an API request estimate before each run and enforces an attempt cap. It also exports CSV and JSON for teams that want to bring the evidence into their own process. SearchApi currently offers [100 free requests at signup](https://www.searchapi.io/pricing); [get a key here](https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) and the [repository has the setup steps](https://github.com/forma-norden/buying-window-signal-scorer). The app runs locally, so you can try one profile and inspect the sources yourself.
 
-The tool supports this sequence with a local dashboard. Its default model uses role relevance (up to 40 points, including description mandate), recency (20), qualified news (25) and convergence (15). Users can edit the terms and weights, run discovery or a 50-account watchlist, inspect source evidence and export a review queue. It estimates requests before a scan and caps attempts, including retries, at 150. A fictional demo runs without an API key.
+The test for a buying window is not whether a dashboard gives a company a high score. It is whether you can explain the change in one accurate sentence, point to the source, and connect it to something you can genuinely help with.
 
-This is a single snapshot, not a trend detector. Google Jobs coverage varies, relative posting ages can be imprecise, and a role cannot establish budget, decision authority or purchase intent. The score is a way to order the reading queue. **The final account decision belongs to someone who checks the source and understands the market.**
-
-The [repository and dated run notes](https://github.com/forma-norden/buying-window-signal-scorer) are open source under MIT. It fits into Forma Nôrden's [signal-based list building](https://formanorden.com/open-source/signal-based-list-building-workflow/) and [buying-window routing](https://formanorden.com/open-source/buying-window-signal-workflow/) resources: one finds candidates, one helps assess evidence, and one routes a confirmed signal into a sensible GTM action.
-
-**Disclosure:** SearchApi supplied API credits for this project. Forma Nôrden selected the use case, implemented the scoring model and reports its limitations. [SearchApi](https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) provides the Google Jobs and Google News endpoints used for the scan.
+*Disclosure: SearchApi supplied API credits for this project. Forma Nôrden built the application and scoring rules.*

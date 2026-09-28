@@ -6,7 +6,7 @@ import html
 import re
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, urlunparse
 
 LEGAL_SUFFIXES = {"inc", "incorporated", "ltd", "limited", "llc", "plc", "corp", "corporation"}
 
@@ -86,8 +86,9 @@ def mandate_hits(description: str, settings: dict) -> list[str]:
     lower = plain.lower()
     hits = []
     for term in settings["mandate_terms"]:
-        at = lower.find(term.lower().replace("’", "'"))
-        if at >= 0:
+        match = re.search(r"(?<!\w)" + re.escape(term.lower().replace("’", "'")) + r"(?!\w)", lower)
+        if match:
+            at = match.start()
             start = max(0, at - 55)
             end = min(len(plain), at + len(term) + 75)
             if start:
@@ -131,7 +132,7 @@ def parse_news(payload: dict, company: str, aliases: list[str], settings: dict, 
             continue
         title = str(item.get("title") or "")
         snippet = str(item.get("snippet") or "")
-        if not mentions_company(title + " " + snippet, company, aliases):
+        if not mentions_company(title, company, aliases):
             continue
         normal_title = " " + normalise_name(title) + " "
         event = next((label for label, terms in settings["events"].items() if any(" " + normalise_name(term) + " " in normal_title for term in terms)), None)
@@ -140,11 +141,15 @@ def parse_news(payload: dict, company: str, aliases: list[str], settings: dict, 
         if not event:
             continue
         date = item.get("date") or item.get("published_at")
+        link = str(item.get("link") or "")
+        parsed = urlparse(link)
+        canonical = urlunparse((parsed.scheme, parsed.netloc, parsed.path.rstrip("/"), "", "", "")) if parsed.netloc else ""
+        news_id = hashlib.sha256((canonical or title.lower() + "|" + str(item.get("source") or "")).encode()).hexdigest()[:20]
         results.append({
-            "title": title, "snippet": snippet, "event": event,
+            "id": news_id, "title": title, "snippet": snippet, "event": event,
             "date": date, "age_days": age_days(date, now),
-            "source": item.get("source") or "", "url": item.get("link") or "",
-            "identity_confidence": "medium" if mentions_company(title, company, aliases) and identity_confidence(company) == "medium" else "low",
+            "source": item.get("source") or "", "url": link,
+            "identity_confidence": identity_confidence(company),
         })
     return results
 
@@ -182,12 +187,12 @@ def score_account(company: str, jobs: list[dict], news: list[dict], settings: di
     if identity_confidence(company) == "low":
         flags.append("Short company name may match unrelated organisations")
     if any(n["identity_confidence"] == "low" for n in matched_news):
-        flags.append("Low-confidence news is shown but excluded from scoring")
+        flags.append("Check the company match in the news")
     return {
         "company": company, "score": sum(parts.values()), "parts": parts,
         "identity_confidence": confidence, "icp_fit": "unknown",
         "jobs": matched_jobs, "news": matched_news,
-        "explanation": f"{len(current_jobs)} dated relevant job(s) and {len(current_news)} identity-supported, dated news event(s) in the last 30 days. Low-confidence news is visible but earns no points.",
+        "explanation": f"{len(current_jobs)} recent matching job(s) · {len(current_news)} matching news event(s)",
         "aliases": aliases,
         "review_flags": flags,
     }
