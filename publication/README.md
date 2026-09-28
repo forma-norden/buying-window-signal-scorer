@@ -1,10 +1,8 @@
-# Publication copy
+# Articles and launch copy
 
-| File | Destination | Angle |
-| --- | --- | --- |
-| [DEV article](dev-article.md) | DEV Community | Build and run a configurable, source-linked search from Jobs and News data |
-| [LinkedIn article](linkedin-pulse-article.md) | LinkedIn Pulse | A practical weekly method for finding a relevant reason to contact a company |
-| [LinkedIn post](linkedin-launch-post.md) | LinkedIn feed | Short launch copy for the article and repository |
-| [Forma Nôrden blog](forma-norden-blog.md) | Forma Nôrden site | Full method, worked example, live check, request economics, and FAQs |
+- [DEV article](dev-article.md): the Python build, SearchApi Jobs and News searches, and source-linked scoring.
+- [LinkedIn article](linkedin-pulse-article.md): a practical way to find and qualify timely company changes.
+- [LinkedIn launch post](linkedin-launch-post.md): a short introduction to the article and repository.
+- [Forma Nôrden blog article](forma-norden-blog.md): the full buying-signal method, request economics and worked example.
 
-Each article has its own introduction and structure. The DEV and LinkedIn articles are complete copy for their respective editors. The site blog copy is complete, but the site's existing editorial release process controls when it is published. The dated observations come from [the live-run note](../docs/live-run-2026-09-28.md); the worked 100-point example is labelled fictional.
+For installation and code documentation, see the [project README](../README.md).

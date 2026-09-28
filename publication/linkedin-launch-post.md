@@ -1,13 +1,9 @@
-Most prospect lists answer “who fits?”
+An “Operations Manager” vacancy tells you who is hiring. The job description may tell you what the company is about to build.
 
-They rarely answer “why talk now?”
+We built an open-source Python app to find those changes. It searches Google Jobs and Google News through SearchApi, ranks companies against the roles and events you choose, and shows the source behind every score.
 
-We built a small open-source tool that looks for that second answer in public job posts and company news. You choose the roles, job-description phrases, and events that matter to your offer. It ranks the companies it finds and shows the source behind every point.
+A recruiter can look for new teams. A software vendor can look for expansion. A consultancy can look for a new leader's implementation mandate. Same tool, different signal profile.
 
-There are starter profiles for growth, team buildout, new leadership, and revenue operations. You can also check a watchlist, set an API request limit, and export the results.
+I wrote up the method in the LinkedIn article. The app, setup guide and source code are here: https://github.com/forma-norden/buying-window-signal-scorer
 
-The important step still happens after the scan: read the posting, verify the employer, and decide whether the change is one you can actually help with.
-
-I wrote up the approach in the LinkedIn article. The app and setup steps are here: https://github.com/forma-norden/buying-window-signal-scorer
-
-SearchApi provided API credits for the build.
+SearchApi supplied API credits for the build.

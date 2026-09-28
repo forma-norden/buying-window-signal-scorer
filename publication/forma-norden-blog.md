@@ -1,7 +1,7 @@
 ---
-title: "How to Find Buying Windows in Job Posts and Company News"
+title: "How to Find B2B Buying Signals in Job Posts and Company News"
 slug: buying-window-signals-jobs-news
-description: "A practical method for turning relevant hiring and company news into an evidence-led account research queue, with an open-source tool you can run yourself."
+description: "Find companies whose hiring briefs and recent news point to a relevant change. See how to search, score and qualify the evidence with an open-source SearchApi tool."
 category: Sales Prospecting
 cluster: Signal-based prospecting
 intent: practitioner implementation
@@ -9,107 +9,108 @@ date: 2026-09-28
 status: draft awaiting site editorial release
 ---
 
-# How to find buying windows in job posts and company news
+# How to find B2B buying signals in job posts and company news
 
-An account can fit your target market for years without having a reason to change anything. That is the gap between a good prospect list and a useful outreach queue. The first tells you *who* could buy. The second should tell you *what changed* and whether your offer could help with it.
+A company hiring an operations manager might be replacing someone. It might be opening a new market, building its first regional team or trying to fix a process that stopped scaling. The title gets the company onto a list. The job description can reveal which of those changes is happening.
 
-Public job descriptions are one place to find that change. A company hiring an operations manager may be opening a region, bringing an outsourced process in-house, or replacing a patchwork of systems. The title gets you to the posting; the mandate in the description tells you what to investigate. Company news can supply another part of the story if it clearly refers to the same employer.
+That distinction matters if you sell to businesses. A logistics software vendor, a recruiter and a systems consultancy could all be interested in the same employer, but each needs a different reason to pursue it. A generic “hiring” alert cannot make that decision for them.
 
-We built an [open-source Buying Window Signal Scorer](https://github.com/forma-norden/buying-window-signal-scorer) to turn that method into a repeatable search. It combines [SearchApi Google Jobs](https://www.searchapi.io/docs/google-jobs?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) and [Google News](https://www.searchapi.io/docs/google-news?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com), ranks companies against an editable profile, and keeps the underlying links beside the score. You can run it locally with your own SearchApi key.
+We built [Buying Window Signal Scorer](https://github.com/forma-norden/buying-window-signal-scorer), a small open-source Python app, to make the research repeatable. It searches [Google Jobs](https://www.searchapi.io/docs/google-jobs?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) and [Google News](https://www.searchapi.io/docs/google-news?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) through SearchApi, ranks companies under rules you can edit, and keeps the original sources beside every score.
 
-**TL;DR:** Define the business change your offer can help with. Search for roles and description phrases that reveal it, then check relevant company events. Score recent, attributable evidence, open the original sources, and qualify the account against your actual market. The [tool and setup guide](https://github.com/forma-norden/buying-window-signal-scorer) make the search repeatable; the score is a research order, not a purchase forecast.
+**TL;DR:** Start with a change your offer can help with. Search for the roles and job-description language that would reveal it. Check company news for context, then open the sources before deciding whether to act. The [tool](https://github.com/forma-norden/buying-window-signal-scorer) turns that process into a source-linked shortlist you can run yourself.
 
-**In this article:** [Choose the signal](#start-with-the-change-your-offer-can-help-with) · [Build the search](#how-the-jobs-and-news-search-works) · [Read the score](#a-worked-scoring-example) · [What a live check found](#what-the-bounded-live-check-found) · [Cost](#request-budget-and-repeat-scans) · [Workflow](#turn-a-result-into-a-useful-account-note) · [FAQs](#frequently-asked-questions) · [Run the app](#run-the-app-yourself)
+**In this article:** [Choose a signal](#choose-the-change-before-the-company) · [Search Jobs and News](#how-the-search-finds-and-checks-companies) · [Read the score](#a-score-you-can-check-against-the-sources) · [Use the result](#turn-a-result-into-an-account-note) · [Request budget](#what-a-search-costs-in-requests) · [Run the tool](#run-your-own-search) · [FAQs](#frequently-asked-questions)
 
-## Start with the change your offer can help with
+## Choose the change before the company
 
-“Hiring” is too broad. Most growing companies hire. A useful signal connects a role or event to a plausible need you can serve.
+The useful question is not “which companies are hiring?” It is “which companies are hiring to do work we can help with?” Define that work before you write a search query.
 
-| If you provide… | Look for a change such as… | Start with these sources |
-| --- | --- | --- |
-| Logistics or process software | A new distribution market or operational scale-up | Operations roles with expansion language; new facility or market news |
-| Recruiting or training | A first team lead or a new function | Role clusters; “build the team” or “first hire” descriptions |
-| Implementation services | A leader asked to modernise a function | New leadership role and mandate; appointment news |
-| CRM or revenue systems work | Ownership of a new commercial systems stack | Revenue operations roles and systems language; commercial leadership changes |
+| Your offer | Change worth finding | Clue in a job post | News that could add context |
+| --- | --- | --- | --- |
+| Logistics or process software | A new market or facility | Operations role tasked with opening a location or scaling a network | Market entry or facility announcement |
+| Recruiting or training | A new function or growing team | First hire, team lead or several roles in the same function | Funding or announced hiring plans |
+| Implementation services | A leader changing a process | Senior role with a systems or transformation mandate | New executive appointment |
+| CRM or revenue systems | New ownership of commercial operations | Sales-operations role that will implement or rebuild a stack | Commercial leadership change |
 
-These examples share a method, not a universal target list. A recruiting firm and a software vendor can read the same job post and draw different next steps. The scorer therefore has four editable starting profiles: growth and expansion, hiring and team buildout, new leadership, and revenue operations. You can rename a profile and edit its job queries, role matches, description terms, news events, country, and scoring weights.
+The same company can be relevant to one offer and irrelevant to another. That is why the app's growth, team buildout, new leadership and revenue-operations profiles are starting points. Each contains job queries, strong and adjacent title matches, description phrases, news events and score weights. You can change them in the dashboard without editing code.
 
-Before scanning, write one sentence: “We help [type of company] with [specific change].” If you cannot say which part of a job description would make that sentence more likely to be relevant, the search is probably too broad.
+If your offer is warehouse planning, “operations manager” is a useful search term but a weak conclusion. “Open a new distribution centre” or “scale our fulfilment network” is closer to the work you solve. Put those phrases in the profile and judge the full posting against them.
 
-## How the Jobs and News search works
+## How the search finds and checks companies
 
-In **discovery mode**, the app searches Google Jobs for the profile's roles in one selected market. It groups the returned jobs by employer and checks Google News for up to the configured number of companies. In **watchlist mode**, it searches for each named company alongside the chosen roles, then checks news for those companies. A watchlist can include aliases when an employer uses more than one name.
+In **discovery mode**, the app sends the selected role queries to SearchApi's Google Jobs engine for one market. It groups the returned listings by employer, removes duplicate jobs and chooses a bounded number of companies for a News search. The default profile uses two Jobs queries and checks news for up to six employers.
 
-The returned employer field matters. A query can mention a company while returning a job posted by a recruiter or another organisation. The scorer only attaches a job when the employer field matches the company being scored. Likely job boards and recruiters are flagged for inspection because the returned employer name cannot by itself settle who ultimately owns a vacancy.
+In **watchlist mode**, you provide the companies first. The app searches for each name alongside the relevant roles, then checks news for the same employers. This is useful when your target accounts are already known and you want to know whether any of them show a new hiring or company event. Aliases can be entered for companies that appear under different names.
 
-For news, the headline must name the company and contain a configured event phrase. A news item also needs a date and a sufficiently specific company name to earn points. This keeps passing mentions in an article snippet out of the queue, while short names that several organisations share still require review.
+The two SearchApi requests have a simple shape:
 
-The search is deliberately bounded: one result page per query, a company ceiling, and a configurable API attempt cap. That makes a small exploratory run practical. It also means the output is a *queue from this search*, not a census of companies in a market.
+~~~json
+{"engine":"google_jobs","q":"operations manager","location":"United States","gl":"us"}
+{"engine":"google_news","q":"\"Example Company\" (funding OR expansion OR appoints)","gl":"us"}
+~~~
 
-## A worked scoring example
+The Jobs search discovers candidates; the News search adds context to the selected companies. The app checks the employer returned with a job before attaching that listing to an account. For news to earn points, the headline must name the company and contain one of the configured event phrases. A passing mention in an article excerpt is not enough.
 
-Consider a **fictional** food distributor, Harbor Foods, in the bundled sample. It has a recent operations manager posting that says the hire will build a team for a new market. A dated article reports an office opening for expansion. With the default growth profile, the two documents produce this breakdown:
+That sequencing also controls cost. The tool does not search news for every listing it sees. It searches news for the employers it has selected under your profile and company limit. The dashboard displays the planned request count before you run anything.
 
-| Evidence | Points | Why |
-| --- | ---: | --- |
-| Strong role and description mandate | 40 / 40 | “Operations Manager” matches a strong title and the description includes a configured expansion phrase |
-| Recent job | 20 / 20 | The listing is dated within seven days of the scan |
-| Company event | 25 / 25 | The expansion headline names the same two-word company and is dated within 30 days |
-| Both sources | 15 / 15 | The recent job and qualified news appear together |
-| **Total** | **100 / 100** | A strong research prompt under this profile |
+## A score you can check against the sources
 
-That 100 is not a probability of purchase. It is the sum of four transparent rules. A person still needs to read the job, confirm the employer, determine whether the expansion affects the relevant team, and check whether the company fits the offer. In the dashboard, the links, dates, score parts, and review flags are all on the same result card, so the conclusion can be challenged quickly.
+The default growth profile has four score parts. A strong role title can earn **25 points**; a matching mandate in the job description can add **15**. A recent job can earn **20** more. A dated, matched company news event adds **25**, with **15** for having both qualified sources. The maximum is 100, and you can change the four weights.
 
-The default model gives up to 40 points for role and description fit, 20 for job recency, 25 for company news, and 15 for the combination. A matching job within seven days receives the full recency portion; a job dated eight to 30 days receives 12. Undated and older items can remain visible without recency points. Users can change the weights, while the four weights must still total 100.
+The bundled sample uses a **fictional** company, Harbor Foods, so anyone can see the complete path without API calls. Its recent operations-manager posting includes a team-building mandate for a new market. An expansion headline names the company. Open the result and you can see the job, article, dates, matched phrases and the `40 + 20 + 25 + 15` breakdown.
 
-## What the bounded live check found
+That example shows what the highest score requires. A current title match without a description mandate or matched news earns 45 under the default rules. Both results are visible, but they call for different amounts of follow-up research.
 
-We tested the new growth profile on **28 September 2026** with a three-company discovery limit. Two Jobs requests returned **19 relevant, deduplicated listings** under the configured role rules. Three News requests checked the selected employers. The scan used **five API requests** and finished without a request error.
+We checked the live integration on **28 September 2026** with a three-company growth scan. Two Jobs requests returned **19 relevant, deduplicated listings**. Three News requests checked the selected employers, making **five SearchApi requests** in total. The selected companies scored 45 from recent role matches. The [dated run note](https://github.com/forma-norden/buying-window-signal-scorer/blob/main/docs/live-run-2026-09-28.md) records the settings and counts.
 
-The three selected companies each scored 45 from a dated, strong title without a matching description mandate or qualifying news. That is a useful result: the search found possible changes, but the source material did not yet support a strong timing case. The next action is to inspect each full posting and, if necessary, revise the phrases to match the offer more closely. A second bounded test of the hiring profile used five requests and found 16 relevant listings; it demonstrated that switching the profile changes which roles and employers the tool surfaces.
+The valuable distinction is between a role that gets your attention and a mandate that gives you something specific to investigate. The score makes that distinction visible beside the source links. You still decide whether the company is in your market and whether the change affects the work you sell.
 
-These counts describe the responses to a few queries at a point in time. They do not measure the size of a market, a conversion rate, or how many companies intend to buy. The [dated run note](https://github.com/forma-norden/buying-window-signal-scorer/blob/main/docs/live-run-2026-09-28.md) records the settings and outcome separately from the getting-started guide.
+## Turn a result into an account note
 
-## Request budget and repeat scans
+Open the top result before exporting it. A useful note takes five lines:
 
-SearchApi's [pricing page](https://www.searchapi.io/pricing?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com) currently lists **100 free requests** on signup. The app shows its planned upper bound before making a live call. Under the shipped growth profile, a discovery run has at most two Jobs requests and six News requests: **eight initial searches**. A smaller three-company run plans five. Retries count against the hard attempt cap, so the final count can differ from the initial plan.
+1. **Change:** the exact responsibility or company event that matters.
+2. **Source:** the posting or article link and its date.
+3. **Employer:** the organisation that actually owns the job, confirmed against the source.
+4. **Offer fit:** one sentence connecting the change to a problem you can solve.
+5. **Next question:** what you still need to learn before contacting anyone.
 
-At eight requests per full default run, 100 requests would cover at most twelve such runs with four requests left **if there were no retries or other usage**. That is arithmetic for planning a trial, not a quoted price or a promise about an account's remaining balance. Set the company and attempt limits to match the decision you need to make. For an initial test, a small scan in one market is usually enough to see whether your role and phrase choices produce useful evidence.
+For example, if a posting says a new operations lead will open a regional distribution centre, a warehouse software vendor could investigate the rollout, systems and owner of that work. A recruiter could instead look at which roles the new lead needs to hire. The same document can support two different account hypotheses. Keeping the quoted responsibility and source link prevents either team from turning a vague “growth” label into a confident but empty pitch.
 
-The app stores a redacted raw-response archive locally and lets you export CSV or JSON. Replaying an archive re-runs the scoring logic without another API search. On a later live scan with the same settings, it marks items absent from the previous matching scan as “first seen in results.” The label refers to what this search observed; it does not claim when a job or article first appeared online.
+This is where the tool fits in Forma Nôrden's open-source library. The [Signal-Based List Building Workflow](https://formanorden.com/open-source/signal-based-list-building-workflow/) helps choose sources and target lists. This scorer searches and prioritises relevant public evidence. The [Buying Window Signal Workflow](https://formanorden.com/open-source/buying-window-signal-workflow/) helps decide who owns a verified signal and what should happen next.
 
-## Turn a result into a useful account note
+## What a search costs in requests
 
-The score is most valuable when it saves the time between a long result list and a defensible next action. For each promising company, record:
+SearchApi currently lists [100 free requests on signup](https://www.searchapi.io/pricing?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com). The default discovery profile plans **two Jobs requests plus up to six News requests**, or at most eight initial searches. A three-company run plans five. The app enforces a configurable attempt cap, including retries, and shows the estimate before a live scan.
 
-1. **The change:** the exact line in the job description or the event in the article.
-2. **The source and date:** link to the posting or article and note when it was observed.
-3. **The employer check:** confirm that the role belongs to the company you intend to contact. Check an official careers or company page when the name is ambiguous.
-4. **Your relevance:** explain in one sentence how your offer relates to that change. If the link is weak, do not force it.
-5. **The next question:** decide what you still need to know before outreach, such as who owns the initiative or whether the hire is already complete.
+At eight initial requests, 100 requests could cover twelve full default scans with four left over if there were no retries or other usage. Use that as a trial-planning calculation, then choose the market, company count and profile that answer a real question for your team.
 
-This is where the tool fits into Forma Nôrden's open-source library. The [Signal-Based List Building Workflow](https://formanorden.com/open-source/signal-based-list-building-workflow/) helps organise potential sources and targets. The scorer searches and prioritises evidence. The [Buying Window Signal Workflow](https://formanorden.com/open-source/buying-window-signal-workflow/) helps route a verified signal to a suitable next action. None of these steps requires treating every company that hires as ready to buy.
+The app archives redacted raw responses locally. If you change the scoring rules, you can replay an archive without making the same API calls again. Run a later live scan with the same settings and the app highlights items newly seen in your results. CSV and JSON exports let you carry the shortlist into your existing research process.
+
+## Run your own search
+
+The project is [MIT licensed on GitHub](https://github.com/forma-norden/buying-window-signal-scorer). Get a [SearchApi key](https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com), then follow the [repository quickstart](https://github.com/forma-norden/buying-window-signal-scorer#get-started) to install the Python app and start the local dashboard.
+
+Choose **Growth & expansion**, **Team buildout**, **New leadership** or **Revenue operations**. Pick one market and use the small discovery size first. Open the highest-ranked source documents, then narrow the profile to the type of work your offer addresses. You can also start from a watchlist if you already know which companies to investigate.
+
+No key is needed to click **View growth sample** and inspect the fictional example. A live scan uses your key from a local environment variable or ignored `.env` file.
 
 ## Frequently asked questions
 
-### Is a job posting a buying signal?
+### What counts as a buying signal in a job posting?
 
-It can be a *change signal*. A job description may disclose a new initiative, missing capability, or expansion plan. It does not establish that the company is evaluating vendors. Read the mandate, confirm the employer and date, and connect the change to a relevant offer before treating it as an outreach reason.
+The most useful part is a responsibility that points to a change: building a team, entering a market, implementing a system or taking ownership of a new function. A relevant title helps find the posting; the description tells you what the employer wants that person to do. Read the full source before connecting it to your offer.
 
-### Why include news if a job posting already describes the need?
+### Why add company news to a jobs search?
 
-News can provide independent context: an announced market entry, an investment, or a leadership change may explain why a team is hiring now. News also creates false matches when names are common or the article refers to another organisation. The scorer awards news points only to dated, event-matched items with adequate company identity support.
+An expansion, investment or leadership announcement can explain the timing of a hire. The app awards news points only when a dated headline names the employer and matches an event in the chosen profile. Jobs and news can each be useful on their own; together they may give you a more specific question to investigate.
 
-### Can I use my own list of accounts?
+### Can I search a list of companies I already work with?
 
-Yes. Watchlist mode accepts company names, one per line, and optional aliases after a vertical bar. It searches the profile's roles for each employer and checks matching news. Use the request estimate to see how the list size affects the search budget before running it.
+Yes. **Check my watchlist** accepts one company per line and optional aliases. The dashboard estimates Jobs and News requests from the size of your list before you run it.
 
-### Does the score predict intent or rank company fit?
+### Does a high score mean a company is ready to buy?
 
-No. It ranks evidence under the profile you selected. A company can score highly and be outside your market. Another can score modestly because its posting lacks a date or a configured phrase while still being worth a manual look. The source documents and your account criteria make the final decision.
+The score is an order for reading source documents under the profile you chose. It does not know your commercial fit criteria, whether the project has a vendor budget or whether the work is already committed to someone else. Those decisions belong in the account note and the next conversation.
 
-## Run the app yourself
-
-Get a [SearchApi key](https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com), then follow the [five-minute repository setup](https://github.com/forma-norden/buying-window-signal-scorer). Choose one profile, narrow it to your offer, check the request estimate, and run a small live scan. The repository includes the code, tests, a fictional sample, and the dated live-run record.
-
-*Disclosure: SearchApi supplied API credits for this project. Forma Nôrden built the application, scoring rules, and editorial analysis.*
+*SearchApi supplied API credits for this project. Forma Nôrden built the app, scoring rules and article.*
