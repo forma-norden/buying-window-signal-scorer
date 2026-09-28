@@ -1,0 +1,65 @@
+{
+  "role_queries": [
+    "revenue operations saas",
+    "sales operations saas"
+  ],
+  "roles": {
+    "strong": [
+      "revenue operations",
+      "revops",
+      "sales operations",
+      "sales ops"
+    ],
+    "adjacent": [
+      "gtm operations",
+      "go-to-market operations",
+      "commercial operations"
+    ]
+  },
+  "mandate_terms": [
+    "first dedicated revops hire",
+    "crm isn't fully configured",
+    "tooling stack is unevaluated",
+    "gtm systems architecture",
+    "evaluate and implement",
+    "select and implement",
+    "own the tech stack",
+    "build the systems"
+  ],
+  "events": {
+    "funding": [
+      "funding",
+      "raises",
+      "raised",
+      "series a",
+      "series b",
+      "series c"
+    ],
+    "leadership": [
+      "chief revenue officer",
+      "chief sales officer",
+      "cro appointment",
+      "vp sales",
+      "head of sales",
+      "vp revenue"
+    ]
+  },
+  "weights": {
+    "role": 40,
+    "recency": 20,
+    "news": 25,
+    "convergence": 15
+  },
+  "locations": [
+    {
+      "label": "United States",
+      "gl": "us"
+    },
+    {
+      "label": "United Kingdom",
+      "gl": "uk"
+    }
+  ],
+  "max_accounts": 12,
+  "max_requests": 150
+}

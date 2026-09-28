@@ -1,0 +1,151 @@
+"""Search planning, collection, and offline analysis."""
+from __future__ import annotations
+
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+from .config import DEFAULT, ROOT, validate
+from .core import deduplicate_jobs, normalise_name, parse_jobs, parse_news, score_account
+from .searchapi import BudgetExceeded, SearchApiClient
+
+
+def parse_watchlist(text: str) -> list[dict]:
+    result = []
+    seen = set()
+    for line in (text or "").splitlines():
+        cells = line.split("|", 1)
+        name = cells[0].strip()
+        if not name:
+            continue
+        if len(name) > 100:
+            raise ValueError("Company names must be under 100 characters")
+        key = normalise_name(name)
+        if key in seen:
+            continue
+        seen.add(key)
+        aliases = [x.strip() for x in cells[1].split(",") if x.strip()] if len(cells) == 2 else []
+        result.append({"company": name, "aliases": aliases[:5]})
+    if len(result) > 50:
+        raise ValueError("A run supports at most 50 accounts")
+    return result
+
+
+def estimate(mode: str, watchlist: str, settings: dict) -> dict:
+    settings = validate(settings)
+    if mode not in {"discovery", "watchlist"}:
+        raise ValueError("Choose discovery or watchlist")
+    accounts = parse_watchlist(watchlist)
+    if mode == "watchlist" and not accounts:
+        raise ValueError("Add at least one company")
+    jobs = len(settings["role_queries"]) * len(settings["locations"]) if mode == "discovery" else len(accounts) * len(settings["locations"])
+    news = settings["max_accounts"] if mode == "discovery" else len(accounts)
+    planned = jobs + news
+    return {"jobs_requests": jobs, "news_requests_upper_bound": news, "planned_upper_bound": planned, "attempt_cap": settings["max_requests"], "within_cap": planned <= settings["max_requests"]}
+
+
+def _job_queries(mode: str, accounts: list[dict], settings: dict):
+    if mode == "discovery":
+        for loc in settings["locations"]:
+            for role in settings["role_queries"]:
+                yield {"engine": "google_jobs", "q": role, "location": loc["label"], "gl": loc["gl"], "hl": "en"}
+    else:
+        # Google Jobs handles broad natural-language queries more reliably than
+        # quoted Boolean groups. Remove the discovery-only SaaS qualifier when
+        # the employer is already specified.
+        joined = " OR ".join(x.replace(" saas", "").replace(" SaaS", "") for x in settings["role_queries"])
+        for account in accounts:
+            for loc in settings["locations"]:
+                yield {"engine": "google_jobs", "q": f'{account["company"]} {joined}', "location": loc["label"], "gl": loc["gl"], "hl": "en"}
+
+
+def _news_query(account: dict) -> dict:
+    name = account["company"].replace('"', "")
+    return {"engine": "google_news", "q": f'"{name}" funding OR appoints OR "chief revenue officer"', "gl": "us", "hl": "en", "link": "resolved"}
+
+
+def analyse(entries: list[dict], mode: str, watchlist: str, settings: dict, now: datetime | None = None, errors: list[dict] | None = None) -> dict:
+    settings = validate(settings)
+    now = now or datetime.now(timezone.utc)
+    jobs = deduplicate_jobs([job for entry in entries if entry.get("stage") == "jobs" for job in parse_jobs(entry.get("response", {}), settings, now)])
+    if mode == "discovery":
+        grouped = {}
+        for job in jobs:
+            key = normalise_name(job["company"])
+            if key:
+                grouped.setdefault(key, []).append(job)
+        def discovery_priority(group):
+            dated = [job for job in group if job["age_days"] is not None and job["age_days"] <= 30]
+            strong = any(job["role_fit"] == "strong" for job in dated)
+            youngest = min((job["age_days"] for job in dated), default=999)
+            return (-int(strong), -int(bool(dated)), youngest, -len(group), group[0]["company"].lower())
+        ordered = sorted(grouped.values(), key=discovery_priority)
+        accounts = [{"company": group[0]["company"], "aliases": []} for group in ordered[:settings["max_accounts"]]]
+    else:
+        accounts = parse_watchlist(watchlist)
+    rows = []
+    for account in accounts:
+        news = []
+        for entry in entries:
+            if entry.get("stage") == "news" and normalise_name(entry.get("company", "")) == normalise_name(account["company"]):
+                news.extend(parse_news(entry.get("response", {}), account["company"], account["aliases"], settings, now))
+        rows.append(score_account(account["company"], jobs, news, settings, account["aliases"]))
+    rows.sort(key=lambda row: (-row["score"], row["company"].lower()))
+    return {
+        "scanned_at": now.isoformat(), "mode": mode, "account_count": len(rows),
+        "job_count": len(jobs), "request_count": len(entries), "errors": errors or [],
+        "partial": bool(errors), "weights": settings["weights"], "accounts": rows,
+        "method": "Single snapshot. Only dated evidence within 30 days contributes points; company identity and ICP fit remain separate judgments.",
+    }
+
+
+def collect(mode: str, watchlist: str, settings: dict, api_key: str) -> tuple[dict, list[dict], int]:
+    settings = validate(settings)
+    preflight = estimate(mode, watchlist, settings)
+    if not preflight["within_cap"]:
+        raise ValueError(f'Planned upper bound {preflight["planned_upper_bound"]} exceeds the {settings["max_requests"]}-attempt cap')
+    accounts = parse_watchlist(watchlist)
+    client = SearchApiClient(api_key, settings["max_requests"])
+    entries, errors = [], []
+    for params in _job_queries(mode, accounts, settings):
+        try:
+            entries.append({"stage": "jobs", "params": params, "response": client.search(params)})
+        except BudgetExceeded:
+            errors.append({"stage": "jobs", "query": params["q"], "message": "Attempt cap reached"})
+            break
+        except Exception as exc:
+            errors.append({"stage": "jobs", "query": params["q"], "message": str(exc)})
+    if mode == "discovery":
+        preview = analyse(entries, mode, watchlist, settings)
+        accounts = [{"company": row["company"], "aliases": []} for row in preview["accounts"]]
+    for account in accounts:
+        params = _news_query(account)
+        try:
+            entries.append({"stage": "news", "company": account["company"], "params": params, "response": client.search(params)})
+        except BudgetExceeded:
+            errors.append({"stage": "news", "query": account["company"], "message": "Attempt cap reached"})
+            break
+        except Exception as exc:
+            errors.append({"stage": "news", "query": account["company"], "message": str(exc)})
+    report = analyse(entries, mode, watchlist, settings, errors=errors)
+    report["request_count"] = client.attempts
+    report["planned_upper_bound"] = preflight["planned_upper_bound"]
+    return report, entries, client.attempts
+
+
+def demo() -> tuple[dict, list[dict]]:
+    archive = json.loads((ROOT / "examples" / "demo-responses.json").read_text(encoding="utf-8"))
+    now = datetime.fromisoformat(archive["as_of"].replace("Z", "+00:00"))
+    report = analyse(archive["entries"], archive["mode"], archive.get("watchlist", ""), DEFAULT, now)
+    report["demo"] = True
+    return report, archive["entries"]
+
+
+def replay(path: Path) -> dict:
+    archive = json.loads(path.read_text(encoding="utf-8"))
+    if "as_of" in archive:
+        now = datetime.fromisoformat(archive["as_of"].replace("Z", "+00:00"))
+        return analyse(archive["entries"], archive["mode"], archive.get("watchlist", ""), archive.get("settings", DEFAULT), now)
+    previous = archive["report"]
+    now = datetime.fromisoformat(previous["scanned_at"])
+    return analyse(archive["entries"], previous["mode"], archive.get("watchlist", ""), archive.get("settings", DEFAULT), now, previous.get("errors", []))

@@ -1,0 +1,1 @@
+"""Buying-window signal scorer."""

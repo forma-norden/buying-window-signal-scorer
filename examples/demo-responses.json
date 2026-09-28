@@ -1,0 +1,40 @@
+{
+  "as_of": "2026-09-28T12:00:00Z",
+  "mode": "discovery",
+  "note": "Fictional employers and hand-written fixture responses. This file is for product demonstration and tests only.",
+  "entries": [
+    {
+      "stage": "jobs",
+      "params": {"engine": "google_jobs", "q": "revenue operations", "gl": "us"},
+      "response": {"jobs": [
+        {"title": "Revenue Operations Manager", "company_name": "Northstar Cloud", "location": "Austin, TX", "description": "This will be our first dedicated RevOps hire. You will build the systems for a growing sales team.", "detected_extensions": {"posted_at": "2 days ago"}, "sharing_link": "https://www.google.com/search?htidocid=demo-northstar-1", "apply_link": "https://example.com/northstar/jobs/revops"},
+        {"title": "Sales Operations Lead", "company_name": "Clearline Labs", "location": "Boston, MA", "detected_extensions": {"posted_at": "12 days ago"}, "sharing_link": "https://www.google.com/search?htidocid=demo-clearline-1", "apply_link": "https://example.com/clearline/jobs/sales-ops"},
+        {"title": "Revenue Operations Analyst", "company_name": "Beacon Data", "location": "New York, NY", "detected_extensions": {"posted_at": "5 days ago"}, "sharing_link": "https://www.google.com/search?htidocid=demo-beacon-1", "apply_link": "https://example.com/beacon/jobs/revops"}
+      ]}
+    },
+    {
+      "stage": "jobs",
+      "params": {"engine": "google_jobs", "q": "sales operations", "gl": "uk"},
+      "response": {"jobs": [
+        {"title": "Revenue Operations Manager", "company_name": "Northstar Cloud", "location": "Remote", "detected_extensions": {"posted_at": "2 days ago"}, "sharing_link": "https://www.google.com/search?htidocid=demo-northstar-1"},
+        {"title": "GTM Operations Specialist", "company_name": "Clearline Labs", "location": "London", "detected_extensions": {}, "sharing_link": "https://www.google.com/search?htidocid=demo-clearline-2"},
+        {"title": "Software Engineer", "company_name": "Irrelevant Co", "location": "London", "detected_extensions": {"posted_at": "1 day ago"}}
+      ]}
+    },
+    {
+      "stage": "news", "company": "Northstar Cloud",
+      "params": {"engine": "google_news", "q": "Northstar Cloud funding"},
+      "response": {"organic_results": [
+        {"title": "Northstar Cloud raises Series B funding", "snippet": "The company will expand its sales team.", "date": "2026-09-23", "source": "Example Business Journal", "link": "https://example.com/northstar/series-b"},
+        {"title": "Cloud spending outlook", "snippet": "Northstar Cloud is mentioned in a market roundup.", "date": "2026-09-24", "link": "https://example.com/roundup"}
+      ]}
+    },
+    {"stage": "news", "company": "Clearline Labs", "params": {"engine": "google_news", "q": "Clearline Labs funding"}, "response": {"organic_results": []}},
+    {
+      "stage": "news", "company": "Beacon Data", "params": {"engine": "google_news", "q": "Beacon Data appoints"},
+      "response": {"organic_results": [
+        {"title": "Beacon Data appoints new chief revenue officer", "snippet": "Leadership change at Beacon Data.", "date": "2026-09-26", "source": "Example Tech Wire", "link": "https://example.com/beacon/cro"}
+      ]}
+    }
+  ]
+}

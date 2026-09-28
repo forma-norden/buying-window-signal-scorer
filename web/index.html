@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Prioritise accounts using inspectable hiring and company-news signals.">
+  <title>Buying Window Signal Scorer · Forma Nôrden</title>
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar"><a class="brand" href="https://formanorden.com/open-source/" target="_blank" rel="noopener">FORMA NÔRDEN <span>/ OPEN SOURCE</span></a><span class="local-label">LOCAL WORKSPACE</span></header>
+    <main>
+      <section class="hero">
+        <div class="eyebrow"><span class="dot"></span> GOOGLE JOBS + GOOGLE NEWS</div>
+        <h1>Find the accounts worth a closer look.</h1>
+        <p>Combine live hiring and company news into a transparent research priority. Every point links back to its source. A score is a prompt to investigate, not proof of a buying decision.</p>
+      </section>
+      <section class="workspace">
+        <div class="panel input-panel">
+          <div class="section-heading"><div><p class="overline">01 / SET UP</p><h2>Choose a scan</h2></div><span id="key-status" class="status">Checking key…</span></div>
+          <div class="mode-row" role="group" aria-label="Scan type">
+            <label class="mode-option"><input type="radio" name="mode" value="discovery" checked><span><strong>Discover employers</strong><small>Find companies hiring for your chosen roles.</small></span></label>
+            <label class="mode-option"><input type="radio" name="mode" value="watchlist"><span><strong>Check a watchlist</strong><small>Investigate companies you already know.</small></span></label>
+          </div>
+          <div id="watchlist-wrap" hidden><label for="watchlist">Companies, one per line <span class="muted">(up to 50)</span></label><textarea id="watchlist" rows="6" placeholder="Acme Cloud&#10;Northstar Data | Northstar"></textarea><p class="hint">Optional aliases follow a vertical bar and are separated by commas.</p></div>
+          <div class="preflight" id="preflight">Calculating request limit…</div>
+          <div class="actions"><button id="run" class="button primary">Run live scan <span aria-hidden="true">↗</span></button><button id="demo" class="button secondary">Explore demo</button></div>
+          <p id="message" class="message" aria-live="polite"></p>
+        </div>
+        <div class="panel settings-panel">
+          <div class="section-heading"><div><p class="overline">02 / LENS</p><h2>Adjust the scoring</h2></div><span class="pill">GTM / REVOPS PRESET</span></div>
+          <p class="panel-intro">The same rules score every account. Changes are saved locally and used on your next scan.</p>
+          <details id="editor"><summary>Edit roles, events and weights <span>+</span></summary>
+            <div class="editor-grid">
+              <label>Job search phrases <textarea id="role-queries" rows="3"></textarea></label>
+              <label>Strong-fit job titles <textarea id="strong-roles" rows="3"></textarea></label>
+              <label>Adjacent job titles <textarea id="adjacent-roles" rows="3"></textarea></label>
+              <label>Job-description mandate phrases <textarea id="mandate-terms" rows="3"></textarea></label>
+              <label>Funding terms <textarea id="funding-terms" rows="3"></textarea></label>
+              <label>Leadership terms <textarea id="leadership-terms" rows="3"></textarea></label>
+            </div>
+            <div class="weight-grid">
+              <label>Role <input id="weight-role" type="number" min="0" max="100"></label>
+              <label>Recency <input id="weight-recency" type="number" min="0" max="100"></label>
+              <label>News <input id="weight-news" type="number" min="0" max="100"></label>
+              <label>Convergence <input id="weight-convergence" type="number" min="0" max="100"></label>
+            </div>
+            <label class="account-limit">Maximum discovery accounts <input id="max-accounts" type="number" min="1" max="50"></label>
+            <p class="hint">The four weights must total 100. Results count only dated signals from the past 30 days.</p>
+            <button id="save-settings" class="button secondary">Save lens</button>
+          </details>
+        </div>
+      </section>
+      <section class="results-section" id="results-section" hidden>
+        <div class="results-head"><div><p class="overline">03 / EVIDENCE</p><h2>Account priorities</h2><p id="run-summary" class="muted"></p></div><div class="export"><a href="/api/export.csv">Download CSV</a><a href="/api/export.json">Download JSON</a><a href="/api/raw-latest">Raw responses</a></div></div>
+        <div id="caveat" class="caveat"></div>
+        <div id="accounts" class="accounts"></div>
+      </section>
+    </main>
+    <footer>Built for inspectable account research. <a href="https://github.com/forma-norden/buying-window-signal-scorer" target="_blank" rel="noopener">View the method and code ↗</a></footer>
+  </div>
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>

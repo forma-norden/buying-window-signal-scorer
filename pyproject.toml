@@ -1,0 +1,17 @@
+[project]
+name = "buying-window-signal-scorer"
+version = "0.1.0"
+description = "Evidence-led account prioritisation from Google Jobs and Google News"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1"]
+
+[project.scripts]
+buying-window = "buying_window.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["buying_window*"]
