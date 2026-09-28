@@ -6,7 +6,7 @@ The corrected scan used 16 SearchApi requests, found 35 relevant job listings an
 
 That is the point of the build: a public signal should tell you what to investigate, with its source and uncertainty attached. It cannot tell you that an account is buying.
 
-I wrote up the scoring model, the false positive and a five-step account review in the article. The local dashboard and fictional demo are open source: https://github.com/forma-norden/buying-window-signal-scorer
+The article covers the scoring model, the false positive and a five-step account review. The local dashboard and fictional demo are open source: https://github.com/forma-norden/buying-window-signal-scorer
 
 SearchApi supplied API credits for this project. The observed results and limitations are ours. https://www.searchapi.io/?utm_source=dev&utm_medium=ambassador&utm_campaign=formanorden.com
 
